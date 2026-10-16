@@ -1,0 +1,1095 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Morris–Lecar Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&display=swap">
+<style>
+/* Layout: a bench instrument — one control strip on top, a large plot with a narrow side console, readouts in mono. */
+:root {
+  --bg: #eef2f3; --panel: #ffffff; --ink: #14202b; --muted: #5a6977; --line: #d3dce1; --soft: #e5ecef;
+  --accent: #0b6b70; --accent-ink: #ffffff;
+  --vnull: #cf4a12; --wnull: #1f62c9; --orbit: #14202b; --sman: #7b3fe0; --uman: #d8263a; --wu: #23a23a; --field: #8796a3;
+  --set1: #0b6b70; --set2: #cf4a12; --set3: #7b3fe0;
+  --ok: #1d7a3e; --warn: #b26a00; --bad: #c4263a;
+  --font-display: "Archivo", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1519; --panel: #162027; --ink: #e3eaee; --muted: #93a3af; --line: #2a3943; --soft: #1d2a32;
+  --accent: #3fb7b0; --accent-ink: #062022;
+  --vnull: #ff8a4c; --wnull: #6aa4ff; --orbit: #e3eaee; --sman: #b28cff; --uman: #ff6b7a; --wu: #5ad46a; --field: #5d6f7c;
+  --set1: #3fb7b0; --set2: #ff8a4c; --set3: #b28cff;
+  --ok: #5fcf86; --warn: #f0b04a; --bad: #ff6b7a; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1519; --panel: #162027; --ink: #e3eaee; --muted: #93a3af; --line: #2a3943; --soft: #1d2a32;
+  --accent: #3fb7b0; --accent-ink: #062022;
+  --vnull: #ff8a4c; --wnull: #6aa4ff; --orbit: #e3eaee; --sman: #b28cff; --uman: #ff6b7a; --wu: #5ad46a; --field: #5d6f7c;
+  --set1: #3fb7b0; --set2: #ff8a4c; --set3: #b28cff;
+  --ok: #5fcf86; --warn: #f0b04a; --bad: #ff6b7a; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font-body); margin: 0; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 40px; display: grid; gap: 14px; }
+h1 { font-family: var(--font-display); font-stretch: 112%; font-weight: 750; font-size: 1.6rem; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h1 small { font-family: var(--font-mono); font-weight: 400; font-size: 0.78rem; color: var(--muted); letter-spacing: 0; margin-left: 10px; font-stretch: 100%; }
+h2 { font-family: var(--font-display); font-stretch: 105%; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; }
+.titleblock { display: grid; gap: 8px; min-width: 0; }
+.mathwrap { overflow-x: auto; min-width: 0; }
+.math { font-family: "STIX Two Text", "Cambria Math", "Times New Roman", Times, serif; font-size: clamp(0.95rem, 2.4vw, 1.18rem); color: var(--ink);
+  display: grid; grid-template-columns: auto auto auto; justify-content: start; align-items: center; column-gap: 0.4em; row-gap: 0.3em; white-space: nowrap; font-variant-numeric: normal; }
+.math i { font-style: italic; }
+.math sub { font-size: 0.68em; vertical-align: -0.35em; line-height: 0; }
+.math .lhs { justify-self: end; }
+.math .rel { justify-self: center; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 0.12em; line-height: 1.2; }
+.frac > span:first-child { border-bottom: 0.07em solid currentColor; padding: 0 0.2em 0.06em; }
+.frac > span:last-child { padding: 0.06em 0.2em 0; }
+.math .op { margin: 0 0.22em; }
+.math .th { display: inline-block; width: 0.17em; }
+@media (max-width: 520px) { .math { font-size: 0.86rem; } }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { font: 500 0.85rem var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 7px 13px; cursor: pointer; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg button .sub { font-family: var(--font-mono); font-size: 0.72rem; opacity: 0.8; margin-left: 6px; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs button { font: 600 0.9rem var(--font-body); background: none; border: 0; padding: 9px 14px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 14px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.plotbox { position: relative; width: 100%; }
+canvas { display: block; width: 100%; }
+#phase { height: min(62vh, 560px); min-height: 340px; cursor: crosshair; touch-action: pan-y; }
+#ts { height: 210px; }
+#bif, #freq { height: min(62vh, 560px); min-height: 340px; cursor: crosshair; }
+.readout { position: absolute; top: 8px; right: 10px; font: 0.75rem var(--font-mono); color: var(--muted); background: color-mix(in srgb, var(--panel) 85%, transparent); padding: 2px 6px; border-radius: 4px; pointer-events: none; }
+.hint { font-size: 0.8rem; color: var(--muted); }
+
+.ctl { display: grid; gap: 6px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+label.lbl { font-size: 0.82rem; color: var(--muted); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+input[type=number], input[type=text] { font: 0.85rem var(--font-mono); padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); width: 100%; min-width: 0; }
+.numw { width: 96px !important; }
+.btn { font: 500 0.82rem var(--font-body); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chk { display: flex; gap: 7px; align-items: center; font-size: 0.85rem; cursor: pointer; }
+.chk input { accent-color: var(--accent); }
+.sw { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; }
+.sw.dash { background: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px) !important; height: 2px; }
+
+.events { display: grid; gap: 4px; }
+.ev { display: grid; grid-template-columns: 56px 1fr auto; gap: 8px; align-items: center; font-size: 0.82rem; padding: 4px 0; border-top: 1px solid var(--soft); }
+.ev:first-child { border-top: 0; }
+.tag { font: 600 0.7rem var(--font-mono); padding: 2px 6px; border-radius: 4px; background: var(--soft); text-align: center; letter-spacing: 0.03em; }
+.ev .btns { display: flex; gap: 4px; }
+.ev .btns .btn { padding: 3px 7px; font-size: 0.75rem; }
+
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--soft); white-space: nowrap; }
+th { font-weight: 600; color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td.num { text-align: right; }
+.pill { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; }
+.pill.s { color: var(--ok); } .pill.u { color: var(--bad); } .pill.x { color: var(--warn); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.trajlist { display: grid; gap: 3px; font-size: 0.8rem; }
+.trajlist div { display: flex; gap: 8px; align-items: center; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+details.params { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+details.params summary { cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px 12px; margin-top: 10px; }
+.pgrid label { display: grid; gap: 2px; font: 0.75rem var(--font-mono); color: var(--muted); }
+
+.progress { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--panel) 80%, transparent); font-size: 0.9rem; }
+.bar { width: 220px; height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+.badge { font: 0.72rem var(--font-mono); color: var(--warn); }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="titleblock">
+      <h1>Morris–Lecar Lab <small id="fileTag">ML-RE1.ode</small></h1>
+      <div class="mathwrap" role="math" aria-label="Morris–Lecar equations: C dv/dt = I_app − g_Ca m_inf(v)(v − E_Ca) − g_K w (v − E_K) − g_L (v − E_L); dw/dt = phi (w_inf(v) − w) / tau_w(v)">
+        <div class="math" aria-hidden="true">
+          <span class="lhs"><span class="frac"><span><i>dv</i></span><span><i>dt</i></span></span></span>
+          <span class="rel">=</span>
+          <span><span class="frac"><span>1</span><span><i>C</i></span></span><span class="th"></span>[<i>I</i><sub><i>app</i></sub><span class="op">−</span><i>g</i><sub><i>Ca</i></sub><span class="th"></span><i>m</i><sub>∞</sub>(<i>v</i>)(<i>v</i><span class="op">−</span><i>E</i><sub><i>Ca</i></sub>)<span class="op">−</span><i>g</i><sub><i>K</i></sub><span class="th"></span><i>w</i>(<i>v</i><span class="op">−</span><i>E</i><sub><i>K</i></sub>)<span class="op">−</span><i>g</i><sub><i>L</i></sub>(<i>v</i><span class="op">−</span><i>E</i><sub><i>L</i></sub>)]</span>
+          <span class="lhs"><span class="frac"><span><i>dw</i></span><span><i>dt</i></span></span></span>
+          <span class="rel">=</span>
+          <span><i>φ</i><span class="th"></span><span class="frac"><span><i>w</i><sub>∞</sub>(<i>v</i>)<span class="op">−</span><i>w</i></span><span><i>τ</i><sub><i>w</i></sub>(<i>v</i>)</span></span></span>
+        </div>
+      </div>
+    </div>
+    <div class="seg" role="group" aria-label="Parameter set" id="setSeg">
+      <button data-set="1" aria-pressed="true">Set 1<span class="sub">φ 0.04</span></button>
+      <button data-set="2" aria-pressed="false">Set 2<span class="sub">φ 0.0667</span></button>
+      <button data-set="3" aria-pressed="false">Set 3<span class="sub">φ 0.23</span></button>
+    </div>
+  </div>
+
+  <details class="params" id="paramsBox">
+    <summary>Parameters <span class="badge" id="customBadge" hidden>· modified from the .ode file</span></summary>
+    <div class="pgrid" id="pgrid"></div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="resetParams">Reset to .ode values</button><span class="hint">Units: mV, mS/cm², µF/cm², ms. Changes apply live to the phase plane; the bifurcation diagram and frequency curve recompute when you open their tabs.</span></div>
+  </details>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="phase" id="tab-phase">Phase plane</button>
+    <button role="tab" aria-selected="false" data-tab="bif" id="tab-bif">Bifurcation diagram</button>
+    <button role="tab" aria-selected="false" data-tab="freq" id="tab-freq">Frequency vs I<sub>app</sub></button>
+  </div>
+
+  <!-- PHASE PLANE -->
+  <section id="pane-phase" class="grid">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2>Phase plane (v, w)</h2>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--vnull)"></i>v-nullcline</span>
+          <span><i class="sw" style="background:var(--wnull)"></i>w-nullcline</span>
+          <span><i class="sw" style="background:var(--orbit)"></i>stable orbit</span>
+          <span style="color:var(--orbit)"><i class="sw dash"></i><span style="color:var(--muted)">unstable orbit</span></span>
+          <span><i class="sw" style="background:var(--wu)"></i>Wᵘ saddle</span>
+          <span><i class="sw" style="background:var(--sman)"></i>Wˢ saddle</span>
+        </div>
+      </div>
+      <div class="plotbox"><canvas id="phase" aria-label="Phase plane"></canvas><div class="readout" id="phaseRead"></div></div>
+      <div class="row" style="justify-content:space-between">
+        <span class="hint">Click to launch a trajectory · drag to pan · scroll to zoom. Filled ● stable, ○ unstable, ◇ saddle.</span>
+        <div class="row"><button class="btn" id="resetView">Reset view</button><button class="btn" id="clearTraj">Clear trajectories</button></div>
+      </div>
+      <div class="row" style="justify-content:space-between"><h2>Time course v(t)</h2><label class="chk"><input type="checkbox" id="showWt"> also w(t) (right axis)</label></div>
+      <canvas id="ts" aria-label="Voltage time course"></canvas>
+      <div class="trajlist" id="trajList"></div>
+      <div class="ctl" style="border-top:1px solid var(--soft);padding-top:10px">
+        <h2>Equilibria at this I<sub>app</sub></h2>
+        <div class="tablewrap"><table id="eqTable"></table></div>
+        <div class="hint">J = [[∂f/∂v, ∂f/∂w], [∂g/∂v, ∂g/∂w]] with ∂g/∂w = −φ/τ<sub>w</sub>. Branch = position on the cubic v-nullcline.</div>
+        <div class="hint" id="orbInfo"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ctl">
+        <div class="row" style="justify-content:space-between"><label class="lbl" for="Inum">I<sub>app</sub> (µA/cm²)</label><input type="number" id="Inum" class="numw" step="0.01"></div>
+        <input type="range" id="Irange" step="0.01">
+        <div class="row"><label class="lbl" for="epsNum">ε for I* ± ε</label><input type="number" id="epsNum" class="numw" value="0.5" step="0.1" min="0"></div>
+      </div>
+      <div class="ctl">
+        <h2>Bifurcation points</h2>
+        <div class="events" id="evList"></div>
+      </div>
+      <div class="ctl">
+        <div class="row" style="justify-content:space-between"><label class="lbl" for="phiNum">φ (time-scale of w)</label><input type="number" id="phiNum" class="numw" step="0.001" min="0.001"></div>
+        <input type="range" id="phiRange" min="0.002" max="0.6" step="0.001">
+      </div>
+      <div class="ctl">
+        <h2>Show</h2>
+        <label class="chk"><input type="checkbox" id="showField" checked> Direction field</label>
+        <label class="chk"><input type="checkbox" id="showMan" checked> Saddle stable/unstable manifolds</label>
+        <label class="chk"><input type="checkbox" id="showOrb" checked> Periodic orbits at this I<sub>app</sub></label>
+        <label class="lbl" for="family">Overlay v-nullclines for other I<sub>app</sub> (comma-separated)</label>
+        <input type="text" id="family" placeholder="e.g. 0, 50, 100, 150">
+        <div class="row"><label class="lbl" for="Tnum">Trajectory length (ms)</label><input type="number" id="Tnum" class="numw" value="400" step="50" min="10"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BIFURCATION -->
+  <section id="pane-bif" class="grid" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2>Bifurcation diagram vs I<sub>app</sub></h2>
+        <div class="seg" role="group" aria-label="Vertical axis" id="bifYSeg"><button data-y="v" aria-pressed="true">v</button><button data-y="w" aria-pressed="false">w</button></div>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ink);height:3px"></i>stable equilibrium</span>
+        <span style="color:var(--ink)"><i class="sw dash"></i><span style="color:var(--muted)">unstable equilibrium</span></span>
+        <span style="color:var(--warn)"><i class="sw dash"></i><span style="color:var(--muted)">saddle</span></span>
+        <span><i class="dot" style="background:var(--accent)"></i>stable cycle max/min</span>
+        <span><i class="dot" style="border:1.5px solid var(--uman)"></i>unstable cycle max/min</span>
+      </div>
+      <div class="plotbox"><canvas id="bif" aria-label="Bifurcation diagram"></canvas><div class="readout" id="bifRead"></div><div class="progress" id="bifProg" hidden><div style="text-align:center">Computing periodic orbits…<div class="bar"><i id="bifBar"></i></div></div></div></div>
+      <span class="hint">Click the diagram to set I<sub>app</sub> (the phase plane follows). Equilibria come from the exact curve I = I<sub>ion</sub>(v, w<sub>∞</sub>(v)); cycles from long simulations (stable: forward in time; unstable: backward in time).</span>
+    </div>
+    <div class="card">
+      <div class="ctl"><h2>Detected points</h2><div class="events" id="evList2"></div></div>
+      <div class="hint">HB Hopf · LP fold of equilibria (saddle-node) · LPC fold of limit cycles · T→∞ a cycle family ending with diverging period. Values from cycle simulations are accurate to about ±0.01.</div>
+      <div class="ctl"><h2>At the selected I<sub>app</sub></h2><div id="atI" class="hint"></div></div>
+      <span class="hint" id="bifNote">Computed automatically when you open this tab and cached until parameters change. Modified parameters take a few seconds.</span>
+    </div>
+  </section>
+
+  <!-- FREQUENCY -->
+  <section id="pane-freq" class="grid" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2>Oscillation frequency of stable cycles</h2>
+        <div class="seg" role="group" aria-label="Units" id="unitSeg"><button data-u="hz" aria-pressed="true">f (Hz)</button><button data-u="rad" aria-pressed="false">ω (rad/s)</button></div>
+      </div>
+      <div class="plotbox"><canvas id="freq" aria-label="Frequency versus current"></canvas><div class="readout" id="freqRead"></div></div>
+      <span class="hint">f = 1000 / T with T the period in ms; ω = 2πf. Dotted curves are unstable cycles.</span>
+    </div>
+    <div class="card">
+      <div class="ctl"><h2>Curves</h2>
+        <label class="chk"><input type="checkbox" class="ovl" data-s="1" checked><i class="sw" style="background:var(--set1)"></i> Set 1</label>
+        <label class="chk"><input type="checkbox" class="ovl" data-s="2" checked><i class="sw" style="background:var(--set2)"></i> Set 2</label>
+        <label class="chk"><input type="checkbox" class="ovl" data-s="3" checked><i class="sw" style="background:var(--set3)"></i> Set 3</label>
+        <label class="chk"><input type="checkbox" id="showUnstF"> Unstable cycles</label>
+        <label class="chk"><input type="checkbox" id="zoomOnset"> Zoom to onset of current set</label>
+      </div>
+      <div class="hint" id="freqNote"></div>
+      <div class="ctl"><h2>Onset of firing</h2><div id="onsetTable" class="tablewrap"></div></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ===== Morris–Lecar numerical core =====
+const SETS = {
+  1: { name: "Set 1", file: "ML-RE1.ode", EL: -60, EK: -84, ECa: 120, V1: -1.2, V2: 18, V3: 2, V4: 30, gL: 2, gK: 8, gCa: 4.4, C: 20, phi: 0.04, I: 100, Irange: [-20, 300] },
+  2: { name: "Set 2", file: "ML-RE2.ode", EL: -60, EK: -84, ECa: 120, V1: -1.2, V2: 18, V3: 12, V4: 17.4, gL: 2, gK: 8, gCa: 4.0, C: 20, phi: 0.066667, I: 0, Irange: [-20, 130] },
+  3: { name: "Set 3", file: "ML-RE3.ode", EL: -60, EK: -84, ECa: 120, V1: -1.2, V2: 18, V3: 12, V4: 17.4, gL: 2, gK: 8, gCa: 4.0, C: 20, phi: 0.23, I: 30, Irange: [-20, 130] },
+};
+
+function makeModel(p) {
+  const { EL, EK, ECa, V1, V2, V3, V4, gL, gK, gCa, C, phi } = p;
+  const minf = v => 0.5 * (1 + Math.tanh((v - V1) / V2));
+  const winf = v => 0.5 * (1 + Math.tanh((v - V3) / V4));
+  const tinv = v => Math.cosh((v - V3) / (2 * V4)); // 1/tau_w
+  const Iion = (v, w) => gCa * minf(v) * (v - ECa) + gK * w * (v - EK) + gL * (v - EL);
+  const fv = (v, w, I) => (I - Iion(v, w)) / C;
+  const fw = (v, w) => phi * (winf(v) - w) * tinv(v);
+  const Ieq = v => Iion(v, winf(v));
+  const vnull = (v, I) => (I - gCa * minf(v) * (v - ECa) - gL * (v - EL)) / (gK * (v - EK));
+  function jac(v, w) {
+    const tm = Math.tanh((v - V1) / V2), tw = Math.tanh((v - V3) / V4);
+    const dm = (1 - tm * tm) / (2 * V2), dw = (1 - tw * tw) / (2 * V4);
+    const m = 0.5 * (1 + tm), wi = 0.5 * (1 + tw);
+    const a = -(gCa * (dm * (v - ECa) + m) + gK * w + gL) / C;
+    const b = -gK * (v - EK) / C;
+    const x = (v - V3) / (2 * V4);
+    const c = phi * (dw * Math.cosh(x) + (wi - w) * Math.sinh(x) / (2 * V4));
+    const d = -phi * Math.cosh(x);
+    return [a, b, c, d];
+  }
+  return { p, minf, winf, tinv, Iion, fv, fw, Ieq, vnull, jac };
+}
+
+function eigInfo(J) {
+  const [a, b, c, d] = J;
+  const tr = a + d, det = a * d - b * c, disc = tr * tr - 4 * det;
+  let l1, l2, type, stable, vecs = null;
+  if (det < 0) {
+    type = "saddle"; stable = false;
+    const s = Math.sqrt(disc); l1 = { re: (tr + s) / 2, im: 0 }; l2 = { re: (tr - s) / 2, im: 0 };
+  } else if (disc >= 0) {
+    const s = Math.sqrt(disc); l1 = { re: (tr + s) / 2, im: 0 }; l2 = { re: (tr - s) / 2, im: 0 };
+    stable = tr < 0; type = stable ? "stable node" : "unstable node";
+  } else {
+    const s = Math.sqrt(-disc); l1 = { re: tr / 2, im: s / 2 }; l2 = { re: tr / 2, im: -s / 2 };
+    stable = tr < 0; type = stable ? "stable focus" : "unstable focus";
+  }
+  if (disc >= 0) {
+    const vec = lam => { // (J - lam) x = 0
+      let x = Math.abs(b) > 1e-14 ? [b, lam - a] : [lam - d, c];
+      const n = Math.hypot(x[0], x[1]) || 1; return [x[0] / n, x[1] / n];
+    };
+    vecs = [vec(l1.re), vec(l2.re)];
+  }
+  return { tr, det, l1, l2, type, stable, vecs };
+}
+
+// equilibria for given I: roots of Ieq(v) = I
+function equilibria(m, I, lo = -120, hi = 160) {
+  const out = []; const step = 0.25;
+  let v0 = lo, g0 = m.Ieq(v0) - I;
+  for (let v1 = lo + step; v1 <= hi; v1 += step) {
+    const g1 = m.Ieq(v1) - I;
+    if (g0 === 0 || g0 * g1 < 0) {
+      let a = v0, b = v1, ga = g0;
+      for (let k = 0; k < 60; k++) { const c = 0.5 * (a + b), gc = m.Ieq(c) - I; if (ga * gc <= 0) b = c; else { a = c; ga = gc; } }
+      const v = 0.5 * (a + b), w = m.winf(v);
+      out.push({ v, w, ...eigInfo(m.jac(v, w)) });
+    }
+    v0 = v1; g0 = g1;
+  }
+  return out;
+}
+
+// equilibrium curve + Hopf / SN points, parametrised by v
+function eqBranch(m, Irange) {
+  const pts = []; const [I0, I1] = Irange; const pad = (I1 - I0) * 0.02;
+  for (let v = -100; v <= 100; v += 0.05) {
+    const I = m.Ieq(v); const w = m.winf(v); const e = eigInfo(m.jac(v, w));
+    pts.push({ v, w, I, tr: e.tr, det: e.det, type: e.type, stable: e.stable });
+  }
+  const events = [];
+  const refine = (fn, a, b) => { let fa = fn(a); for (let k = 0; k < 60; k++) { const c = 0.5 * (a + b), fc = fn(c); if (fa * fc <= 0) b = c; else { a = c; fa = fc; } } return 0.5 * (a + b); };
+  const trF = v => { const J = m.jac(v, m.winf(v)); return J[0] + J[3]; };
+  const detF = v => { const J = m.jac(v, m.winf(v)); return J[0] * J[3] - J[1] * J[2]; };
+  for (let k = 1; k < pts.length; k++) {
+    const a = pts[k - 1], b = pts[k];
+    if (a.tr * b.tr < 0) {
+      const v = refine(trF, a.v, b.v);
+      if (detF(v) > 0) { const J = m.jac(v, m.winf(v)); const om = Math.sqrt(detF(v)); events.push({ kind: "HB", v, I: m.Ieq(v), w: m.winf(v), freqHz: 1000 * om / (2 * Math.PI) }); }
+    }
+    if (a.det * b.det < 0) { const v = refine(detF, a.v, b.v); events.push({ kind: "SN", v, I: m.Ieq(v), w: m.winf(v) }); }
+  }
+  const inRange = pts.filter(q => q.I >= I0 - pad && q.I <= I1 + pad);
+  return { pts: inRange, events: events.filter(e => e.I >= I0 - pad && e.I <= I1 + pad) };
+}
+
+// RK4 step
+function rk4(m, s, I, dt) {
+  const [v, w] = s;
+  const k1v = m.fv(v, w, I), k1w = m.fw(v, w);
+  const k2v = m.fv(v + 0.5 * dt * k1v, w + 0.5 * dt * k1w, I), k2w = m.fw(v + 0.5 * dt * k1v, w + 0.5 * dt * k1w);
+  const k3v = m.fv(v + 0.5 * dt * k2v, w + 0.5 * dt * k2w, I), k3w = m.fw(v + 0.5 * dt * k2v, w + 0.5 * dt * k2w);
+  const k4v = m.fv(v + dt * k3v, w + dt * k3w, I), k4w = m.fw(v + dt * k3v, w + dt * k3w);
+  return [v + dt / 6 * (k1v + 2 * k2v + 2 * k3v + k4v), w + dt / 6 * (k1w + 2 * k2w + 2 * k3w + k4w)];
+}
+
+function trajectory(m, s0, I, T, dt = 0.05, dir = 1, bounds = null) {
+  const n = Math.ceil(T / dt); const ts = [0], vs = [s0[0]], ws = [s0[1]];
+  let s = s0; const every = Math.max(1, Math.round(0.2 / dt));
+  for (let k = 1; k <= n; k++) {
+    s = rk4(m, s, I, dir * dt);
+    if (!isFinite(s[0]) || (bounds && (s[0] < bounds[0] || s[0] > bounds[1] || s[1] < bounds[2] || s[1] > bounds[3]))) { ts.push(k * dt); vs.push(s[0]); ws.push(s[1]); break; }
+    if (k % every === 0 || k === n) { ts.push(k * dt); vs.push(s[0]); ws.push(s[1]); }
+  }
+  return { t: ts, v: vs, w: ws };
+}
+
+// Integrate until settled on equilibrium or cycle. dir=-1 integrates backward in time.
+function attractor(m, s0, I, dir = 1, Tmax = 20000) {
+  const dt = dir > 0 ? 0.1 : 0.05;
+  let s = s0, t = 0, prevV = s[0], prevDv = 0;
+  const maxima = []; let curMin = Infinity, curMaxW = -Infinity, curMinW = Infinity;
+  const BAD = s => !isFinite(s[0]) || s[0] < -150 || s[0] > 200 || s[1] < -1 || s[1] > 2;
+  let quiet = 0;
+  while (t < Tmax) {
+    const ns = rk4(m, s, I, dir * dt); t += dt;
+    if (BAD(ns)) return { type: "escape" };
+    const dv = ns[0] - s[0];
+    if (ns[0] < curMin) curMin = ns[0];
+    if (ns[1] > curMaxW) curMaxW = ns[1]; if (ns[1] < curMinW) curMinW = ns[1];
+    if (prevDv > 0 && dv <= 0) { // local max of v
+      maxima.push({ t, v: s[0], vmin: curMin, wmax: curMaxW, wmin: curMinW, s: s.slice() });
+      curMin = Infinity; curMaxW = -Infinity; curMinW = Infinity;
+      const L = maxima.length;
+      if (L >= 4) {
+        const a = maxima[L - 1], b = maxima[L - 2], c = maxima[L - 3];
+        const P1 = a.t - b.t, P2 = b.t - c.t, amp = a.v - a.vmin;
+        const d1 = (a.v - a.vmin) - (b.v - b.vmin), d0 = (b.v - b.vmin) - (c.v - c.vmin);
+        let ok = amp > 0.05 && Math.abs(P1 - P2) < 2e-3 * P1 + 0.05 && Math.abs(a.v - b.v) < 1e-3 + 1e-4 * Math.abs(a.v) && Math.abs(a.vmin - b.vmin) < 1e-3 + 1e-4 * Math.abs(a.vmin);
+        if (ok && Math.abs(d1) > 1e-6) { // estimate Floquet multiplier; reject drifting orbits (slow foci)
+          const rho = d1 / d0;
+          if (!(Math.abs(rho) < 0.97)) ok = false;
+          else if (amp + d1 * rho / (1 - rho) < 0.3) ok = false;
+        }
+        if (ok) {
+          return { type: "cycle", vmax: a.v, vmin: a.vmin, wmax: a.wmax, wmin: a.wmin, period: P1, s: a.s };
+        }
+      }
+    }
+    prevDv = dv; s = ns;
+    const sp = Math.abs(m.fv(s[0], s[1], I)) + 100 * Math.abs(m.fw(s[0], s[1]));
+    if (sp < 1e-7) { if (++quiet > 50) return { type: "eq", v: s[0], w: s[1], s }; } else quiet = 0;
+  }
+  // not converged: classify by trend of maxima
+  const L = maxima.length;
+  if (L >= 3) {
+    const a = maxima[L - 1], b = maxima[L - 2];
+    const ampA = a.v - a.vmin, ampB = b.v - b.vmin;
+    if (Math.abs(ampA - ampB) < 0.02 * ampA && ampA > 0.5) return { type: "cycle", vmax: a.v, vmin: a.vmin, wmax: a.wmax, wmin: a.wmin, period: a.t - b.t, s: a.s, rough: true };
+  }
+  return { type: "eq", v: s[0], w: s[1], s, rough: true };
+}
+
+if (typeof module !== "undefined") module.exports = { SETS, makeModel, eigInfo, equilibria, eqBranch, rk4, trajectory, attractor };
+
+// ===== periodic-orbit sweep =====
+function analyzeI(m, I, seeds = []) {
+  const eqs = equilibria(m, I);
+  const stable = [], unstable = [];
+  const add = (arr, r) => { if (r.type !== "cycle") return; if (r.rough && (arr === unstable || r.vmax - r.vmin < 5)) return; if (!arr.some(c => Math.abs(c.vmax - r.vmax) < 0.5 && Math.abs(c.vmin - r.vmin) < 0.5)) arr.push(r); };
+  for (const e of eqs) {
+    if (e.stable) {
+      for (const dv of [0.3, -0.3]) add(unstable, attractor(m, [e.v + dv, e.w], I, -1));
+    } else if (e.type === "saddle") {
+      const u = e.vecs[0];
+      for (const sg of [1, -1]) add(stable, attractor(m, [e.v + sg * 0.05 * u[0] * 10, e.w + sg * 0.05 * u[1] * 10], I, 1));
+    } else {
+      add(stable, attractor(m, [e.v + 0.3, e.w], I, 1));
+    }
+  }
+  add(stable, attractor(m, [30, 0.05], I, 1));
+  for (const s of seeds) add(stable, attractor(m, s, I, 1));
+  // unstable cycles nested inside stable cycles but around nothing found yet: probe backward just inside each stable cycle
+  for (const c of stable.slice()) {
+    const s = c.s; // point at v max
+    const e0 = eqs.find(e => e.v > c.vmin && e.v < c.vmax) || eqs[0];
+    for (const f of [0.98, 1.02]) add(unstable, attractor(m, [e0.v + (s[0] - e0.v) * f, e0.w + (s[1] - e0.w) * f], I, -1));
+  }
+  // drop "unstable" duplicates of stable ones
+  const uns = unstable.filter(u => !stable.some(c => Math.abs(c.vmax - u.vmax) < 0.5 && Math.abs(c.vmin - u.vmin) < 0.5));
+  return { I, eqs, stable, unstable: uns };
+}
+
+// async sweep with progress callback; yields to UI between points
+async function sweep(m, Irange, N = 160, onProgress = null) {
+  const [I0, I1] = Irange; const rows = [];
+  let seeds = [];
+  const grid = []; for (let k = 0; k <= N; k++) grid.push(I0 + (I1 - I0) * k / N);
+  const total = grid.length * 2; let done = 0;
+  // upward then downward pass, carrying the last stable-cycle state as a seed
+  const map = new Map();
+  for (const pass of [grid, grid.slice().reverse()]) {
+    seeds = [];
+    for (const I of pass) {
+      const r = analyzeI(m, I, seeds);
+      const prev = map.get(I);
+      if (prev) { for (const c of r.stable) if (!prev.stable.some(d => Math.abs(d.vmax - c.vmax) < 0.5 && Math.abs(d.vmin - c.vmin) < 0.5)) prev.stable.push(c); }
+      else map.set(I, r);
+      seeds = r.stable.map(c => c.s);
+      done++; if (onProgress && done % 4 === 0) { onProgress(done / total); await new Promise(res => setTimeout(res, 0)); }
+    }
+  }
+  for (const I of grid) rows.push(map.get(I));
+  // refine edges where the number of stable/unstable cycles changes
+  const edges = []; const base = rows.slice();
+  for (let k = 1; k < base.length; k++) {
+    for (const key of ["stable", "unstable"]) {
+      const a = base[k - 1], b = base[k];
+      if ((a[key].length > 0) !== (b[key].length > 0)) {
+        const inside = a[key].length > 0 ? a : b, outside = a[key].length > 0 ? b : a;
+        let lo = inside.I, hi = outside.I; let lastIn = inside;
+        for (let it = 0; it < 14 && Math.abs(hi - lo) > 0.005; it++) {
+          const mid = 0.5 * (lo + hi);
+          const r = analyzeI(m, mid, lastIn.stable.map(c => c.s));
+          if (r[key].length > 0) { lo = mid; lastIn = r; rows.push(r); } else { hi = mid; rows.push(r); }
+        }
+        edges.push({ key, I: 0.5 * (lo + hi), insideRow: lastIn });
+      }
+    }
+  }
+  if (onProgress) onProgress(1);
+  rows.sort((x, y) => x.I - y.I);
+  return { rows, edges };
+}
+
+function classifyEdges(edges, events, rows) {
+  // label cycle-existence boundaries
+  const out = [];
+  for (const e of edges) {
+    const cyc = e.insideRow[e.key].reduce((a, c) => (!a || c.period > a.period ? c : a), null);
+    if (!cyc) continue;
+    const nearHB = events.find(h => h.kind === "HB" && Math.abs(h.I - e.I) < 1.5);
+    const nearSN = events.find(h => h.kind === "SN" && Math.abs(h.I - e.I) < 0.3);
+    const amp = cyc.vmax - cyc.vmin;
+    const otherKey = e.key === "stable" ? "unstable" : "stable";
+    const other = e.insideRow[otherKey].find(c => Math.abs(c.vmax - cyc.vmax) < 6 && Math.abs(c.vmin - cyc.vmin) < 6);
+    const typical = rows.filter(r => r.stable.length).map(r => r.stable[0].period).sort((a, b) => a - b);
+    const med = typical.length ? typical[typical.length >> 1] : cyc.period;
+    let kind;
+    if (nearHB && amp < 8) continue; // the cycle family simply ends at the Hopf point
+    else if (other) kind = "SNP"; // fold of limit cycles
+    else if (cyc.period > 2.5 * med) kind = nearSN ? "SNIC" : "HOM";
+    else kind = "SNP";
+    if (kind === "SNP" && out.some(o => o.kind === "SNP" && Math.abs(o.I - e.I) < 0.05)) continue;
+    out.push({ kind, I: e.I, period: cyc.period });
+  }
+  return out;
+}
+
+if (typeof module !== "undefined") Object.assign(module.exports, { analyzeI, sweep, classifyEdges });
+
+const PRE = {"1":{"rows":[{"I":-20,"s":[],"u":[]},{"I":-18.2222,"s":[],"u":[]},{"I":-16.4444,"s":[],"u":[]},{"I":-14.6667,"s":[],"u":[]},{"I":-12.8889,"s":[],"u":[]},{"I":-11.1111,"s":[],"u":[]},{"I":-9.3333,"s":[],"u":[]},{"I":-7.5556,"s":[],"u":[]},{"I":-5.7778,"s":[],"u":[]},{"I":-4,"s":[],"u":[]},{"I":-2.2222,"s":[],"u":[]},{"I":-0.4444,"s":[],"u":[]},{"I":1.3333,"s":[],"u":[]},{"I":3.1111,"s":[],"u":[]},{"I":4.8889,"s":[],"u":[]},{"I":6.6667,"s":[],"u":[]},{"I":8.4444,"s":[],"u":[]},{"I":10.2222,"s":[],"u":[]},{"I":12,"s":[],"u":[]},{"I":13.7778,"s":[],"u":[]},{"I":15.5556,"s":[],"u":[]},{"I":17.3333,"s":[],"u":[]},{"I":19.1111,"s":[],"u":[]},{"I":20.8889,"s":[],"u":[]},{"I":22.6667,"s":[],"u":[]},{"I":24.4444,"s":[],"u":[]},{"I":26.2222,"s":[],"u":[]},{"I":28,"s":[],"u":[]},{"I":29.7778,"s":[],"u":[]},{"I":31.5556,"s":[],"u":[]},{"I":33.3333,"s":[],"u":[]},{"I":35.1111,"s":[],"u":[]},{"I":36.8889,"s":[],"u":[]},{"I":38.6667,"s":[],"u":[]},{"I":40.4444,"s":[],"u":[]},{"I":42.2222,"s":[],"u":[]},{"I":44,"s":[],"u":[]},{"I":45.7778,"s":[],"u":[]},{"I":47.5556,"s":[],"u":[]},{"I":49.3333,"s":[],"u":[]},{"I":51.1111,"s":[],"u":[]},{"I":52.8889,"s":[],"u":[]},{"I":54.6667,"s":[],"u":[]},{"I":56.4444,"s":[],"u":[]},{"I":58.2222,"s":[],"u":[]},{"I":60,"s":[],"u":[]},{"I":61.7778,"s":[],"u":[]},{"I":63.5556,"s":[],"u":[]},{"I":65.3333,"s":[],"u":[]},{"I":67.1111,"s":[],"u":[]},{"I":68.8889,"s":[],"u":[]},{"I":70.6667,"s":[],"u":[]},{"I":72.4444,"s":[],"u":[]},{"I":74.2222,"s":[],"u":[]},{"I":76,"s":[],"u":[]},{"I":77.7778,"s":[],"u":[]},{"I":79.5556,"s":[],"u":[]},{"I":81.3333,"s":[],"u":[]},{"I":83.1111,"s":[],"u":[]},{"I":84.8889,"s":[],"u":[]},{"I":86.6667,"s":[],"u":[]},{"I":87.5556,"s":[],"u":[]},{"I":87.5556,"s":[],"u":[]},{"I":88,"s":[],"u":[]},{"I":88,"s":[],"u":[]},{"I":88.2222,"s":[],"u":[]},{"I":88.2222,"s":[],"u":[]},{"I":88.2778,"s":[],"u":[]},{"I":88.2778,"s":[],"u":[]},{"I":88.2917,"s":[],"u":[]},{"I":88.2917,"s":[],"u":[]},{"I":88.2951,"s":[[-52.1554,25.41,129.6,0.1019,0.4983]],"u":[[-52.0472,20.7157,146.25,0.102,0.4953]]},{"I":88.2951,"s":[[-52.1554,25.41,129.6,0.1019,0.4983]],"u":[[-52.0472,20.7157,146.25,0.102,0.4953]]},{"I":88.2986,"s":[[-52.1638,26.0099,127.2,0.1019,0.4986]],"u":[[-51.9239,17.7844,154.35,0.102,0.4919]]},{"I":88.2986,"s":[[-52.1638,26.0099,127.2,0.1019,0.4986]],"u":[[-51.9239,17.7844,154.35,0.102,0.4919]]},{"I":88.3056,"s":[[-52.1704,26.5582,124.9,0.102,0.4988]],"u":[[-51.6857,14.4188,161.15,0.102,0.4855]]},{"I":88.3056,"s":[[-52.1704,26.5582,124.9,0.102,0.4988]],"u":[[-51.6857,14.4188,161.15,0.102,0.4855]]},{"I":88.3333,"s":[[-52.1766,27.4182,121,0.102,0.4991]],"u":[[-50.8247,8.6055,166.35,0.1021,0.4629]]},{"I":88.3333,"s":[[-52.1766,27.4182,121,0.102,0.4991]],"u":[[-50.8247,8.6055,166.35,0.1021,0.4629]]},{"I":88.4444,"s":[[-52.1702,28.4841,115.9,0.1021,0.4996]],"u":[[-48.2899,1.3213,159.4,0.1026,0.4024]]},{"I":90.2222,"s":[[-51.9012,30.9456,101.8,0.1046,0.5019]],"u":[[-36.6177,-13.8443,100.9,0.1104,0.2142]]},{"I":92,"s":[[-51.6171,31.7316,96.7,0.1071,0.5037]],"u":[[-32.0492,-18.5331,86.6,0.1188,0.1746]]},{"I":93.7778,"s":[[-51.3317,32.2458,93.1,0.1096,0.5055]],"u":[[-26.4984,-24.0477,79,0.1351,0.1446]]},{"I":93.8056,"s":[[-51.3272,32.2514,93,0.1096,0.5055]],"u":[[-26.2989,-24.243,78.9,0.1358,0.1438]]},{"I":93.809,"s":[[-51.3268,32.2531,93.1,0.1096,0.5055]],"u":[[-26.2696,-24.2718,78.95,0.1359,0.1437]]},{"I":93.8125,"s":[[-51.3263,32.2544,93.1,0.1096,0.5055]],"u":[]},{"I":93.8194,"s":[[-51.3252,32.2557,93.1,0.1096,0.5055]],"u":[]},{"I":93.8333,"s":[[-51.3227,32.2596,93,0.1096,0.5055]],"u":[]},{"I":93.8889,"s":[[-51.314,32.2725,92.9,0.1097,0.5056]],"u":[]},{"I":94,"s":[[-51.2961,32.2998,92.8,0.1099,0.5057]],"u":[]},{"I":94.2222,"s":[[-51.2606,32.3512,92.4,0.1102,0.5059]],"u":[]},{"I":94.6667,"s":[[-51.1892,32.4517,91.7,0.1108,0.5064]],"u":[]},{"I":95.5556,"s":[[-51.0465,32.6341,90.4,0.1121,0.5072]],"u":[]},{"I":97.3333,"s":[[-50.7618,32.9471,88.1,0.1146,0.509]],"u":[]},{"I":99.1111,"s":[[-50.4777,33.2094,86.2,0.1171,0.5107]],"u":[]},{"I":100.8889,"s":[[-50.1944,33.4341,84.5,0.1197,0.5124]],"u":[]},{"I":102.6667,"s":[[-49.9116,33.6288,82.9,0.1222,0.5141]],"u":[]},{"I":104.4444,"s":[[-49.6296,33.8027,81.6,0.1248,0.5158]],"u":[]},{"I":106.2222,"s":[[-49.3481,33.9557,80.3,0.1274,0.5175]],"u":[]},{"I":108,"s":[[-49.0675,34.0941,79.3,0.13,0.5192]],"u":[]},{"I":109.7778,"s":[[-48.7876,34.2177,78.2,0.1326,0.5209]],"u":[]},{"I":111.5556,"s":[[-48.5084,34.3294,77.2,0.1352,0.5226]],"u":[]},{"I":113.3333,"s":[[-48.2297,34.4315,76.4,0.1378,0.5243]],"u":[]},{"I":115.1111,"s":[[-47.9515,34.5236,75.5,0.1405,0.526]],"u":[]},{"I":116.8889,"s":[[-47.674,34.6068,74.7,0.1431,0.5277]],"u":[]},{"I":118.6667,"s":[[-47.3968,34.6826,74.1,0.1458,0.5294]],"u":[]},{"I":120.4444,"s":[[-47.1201,34.7521,73.3,0.1485,0.531]],"u":[]},{"I":122.2222,"s":[[-46.844,34.8161,72.7,0.1511,0.5327]],"u":[]},{"I":124,"s":[[-46.568,34.8731,72.1,0.1538,0.5344]],"u":[]},{"I":125.7778,"s":[[-46.2927,34.9266,71.5,0.1565,0.5361]],"u":[]},{"I":127.5556,"s":[[-46.0173,34.9736,71,0.1592,0.5378]],"u":[]},{"I":129.3333,"s":[[-45.7425,35.0167,70.4,0.162,0.5394]],"u":[]},{"I":131.1111,"s":[[-45.4677,35.0551,70,0.1647,0.5411]],"u":[]},{"I":132.8889,"s":[[-45.1929,35.0898,69.5,0.1674,0.5428]],"u":[]},{"I":134.6667,"s":[[-44.9184,35.1203,69,0.1702,0.5444]],"u":[]},{"I":136.4444,"s":[[-44.6439,35.1474,68.6,0.1729,0.5461]],"u":[]},{"I":138.2222,"s":[[-44.3693,35.1719,68.3,0.1757,0.5478]],"u":[]},{"I":140,"s":[[-44.0945,35.1929,67.9,0.1785,0.5495]],"u":[]},{"I":141.7778,"s":[[-43.8194,35.2106,67.5,0.1813,0.5511]],"u":[]},{"I":143.5556,"s":[[-43.5444,35.2244,67.3,0.1841,0.5528]],"u":[]},{"I":145.3333,"s":[[-43.269,35.2382,66.9,0.1869,0.5545]],"u":[]},{"I":147.1111,"s":[[-42.9931,35.2483,66.6,0.1897,0.5561]],"u":[]},{"I":148.8889,"s":[[-42.717,35.2557,66.3,0.1925,0.5578]],"u":[]},{"I":150.6667,"s":[[-42.4399,35.261,66.1,0.1953,0.5595]],"u":[]},{"I":152.4444,"s":[[-42.1626,35.2631,65.9,0.1981,0.5611]],"u":[]},{"I":154.2222,"s":[[-41.8844,35.2645,65.6,0.201,0.5628]],"u":[]},{"I":156,"s":[[-41.6052,35.2626,65.4,0.2038,0.5645]],"u":[]},{"I":157.7778,"s":[[-41.3253,35.2598,65.2,0.2067,0.5661]],"u":[]},{"I":159.5556,"s":[[-41.0443,35.254,65,0.2095,0.5678]],"u":[]},{"I":161.3333,"s":[[-40.7619,35.2472,64.9,0.2124,0.5694]],"u":[]},{"I":163.1111,"s":[[-40.4783,35.2385,64.7,0.2153,0.5711]],"u":[]},{"I":164.8889,"s":[[-40.1929,35.2265,64.6,0.2182,0.5728]],"u":[]},{"I":166.6667,"s":[[-39.9065,35.214,64.4,0.2211,0.5744]],"u":[]},{"I":168.4444,"s":[[-39.6179,35.2008,64.3,0.224,0.5761]],"u":[]},{"I":170.2222,"s":[[-39.327,35.1848,64.2,0.2269,0.5777]],"u":[]},{"I":172,"s":[[-39.0342,35.1669,64.2,0.2299,0.5794]],"u":[]},{"I":173.7778,"s":[[-38.7389,35.1479,64.1,0.2328,0.581]],"u":[]},{"I":175.5556,"s":[[-38.4408,35.1267,64,0.2358,0.5827]],"u":[]},{"I":177.3333,"s":[[-38.1397,35.104,64,0.2387,0.5843]],"u":[]},{"I":179.1111,"s":[[-37.8352,35.0799,64,0.2417,0.586]],"u":[]},{"I":180.8889,"s":[[-37.5269,35.0539,64,0.2447,0.5876]],"u":[]},{"I":182.6667,"s":[[-37.2143,35.0253,64,0.2477,0.5893]],"u":[]},{"I":184.4444,"s":[[-36.8973,34.9958,64.1,0.2507,0.5909]],"u":[]},{"I":186.2222,"s":[[-36.5748,34.9649,64.1,0.2538,0.5926]],"u":[]},{"I":188,"s":[[-36.2464,34.9318,64.3,0.2568,0.5942]],"u":[]},{"I":189.7778,"s":[[-35.9115,34.8965,64.4,0.2599,0.5959]],"u":[]},{"I":191.5556,"s":[[-35.5686,34.8592,64.5,0.263,0.5975]],"u":[]},{"I":193.3333,"s":[[-35.2172,34.8193,64.7,0.2661,0.5992]],"u":[]},{"I":195.1111,"s":[[-34.8559,34.7772,64.9,0.2693,0.6008]],"u":[]},{"I":196.8889,"s":[[-34.4824,34.7319,65.1,0.2725,0.6025]],"u":[]},{"I":198.6667,"s":[[-34.0953,34.6835,65.4,0.2757,0.6041]],"u":[]},{"I":200.4444,"s":[[-33.691,34.6317,65.7,0.2789,0.6058]],"u":[]},{"I":202.2222,"s":[[-33.2664,34.5758,66.1,0.2823,0.6074]],"u":[]},{"I":204,"s":[[-32.8158,34.514,66.5,0.2856,0.609]],"u":[]},{"I":205.7778,"s":[[-32.3319,34.4461,67.1,0.2891,0.6107]],"u":[]},{"I":207.5556,"s":[[-31.8035,34.3701,67.6,0.2927,0.6123]],"u":[]},{"I":209.3333,"s":[[-31.2121,34.282,68.4,0.2964,0.6139]],"u":[]},{"I":211.1111,"s":[[-30.5234,34.1749,69.3,0.3004,0.6156]],"u":[]},{"I":212,"s":[[-30.1233,34.1099,69.9,0.3026,0.6164]],"u":[]},{"I":212.0556,"s":[[-30.0968,34.1056,69.9,0.3027,0.6164]],"u":[]},{"I":212.059,"s":[[-30.0951,34.1051,69.9,0.3027,0.6164]],"u":[[6.9935,8.607,42.35,0.5919,0.5987]]},{"I":212.0625,"s":[[-30.0934,34.1045,69.9,0.3027,0.6164]],"u":[[6.9521,8.6481,42.35,0.5917,0.5989]]},{"I":212.0694,"s":[[-30.0898,34.104,69.9,0.3028,0.6164]],"u":[[6.9103,8.6903,42.35,0.5915,0.599]]},{"I":212.0833,"s":[[-30.0833,34.1037,69.9,0.3028,0.6165]],"u":[[6.7987,8.8018,42.45,0.591,0.5994]]},{"I":212.1111,"s":[[-30.0696,34.1005,69.9,0.3029,0.6165]],"u":[[6.5974,9.0026,42.45,0.5901,0.6002]]},{"I":212.2222,"s":[[-30.0154,34.0926,70,0.3031,0.6166]],"u":[[6.1024,9.5017,42.65,0.5876,0.6019]]},{"I":212.4444,"s":[[-29.9033,34.0739,70.2,0.3037,0.6168]],"u":[[5.2642,10.3393,43.1,0.5831,0.6046]]},{"I":212.8889,"s":[[-29.666,34.0337,70.5,0.3049,0.6172]],"u":[[4.052,11.5513,44.05,0.5758,0.608]]},{"I":214.6667,"s":[[-28.4314,33.8146,72.3,0.3104,0.6188]],"u":[[0.1787,15.422,49.25,0.5457,0.6153]]},{"I":216.4444,"s":[[-25.3977,33.1571,76,0.322,0.6205]],"u":[[-6.4997,21.9253,62.5,0.474,0.6198]]},{"I":216.8889,"s":[[-19.8758,31.2947,78.4,0.3484,0.6208]],"u":[[-15.8353,29.212,76.65,0.3772,0.6208]]},{"I":216.8889,"s":[[-19.8758,31.2947,78.4,0.3484,0.6208]],"u":[[-15.8353,29.212,76.65,0.3772,0.6208]]},{"I":216.8958,"s":[[-19.164,30.9756,78.3,0.3529,0.6208]],"u":[[-16.7012,29.7155,77.25,0.3703,0.6208]]},{"I":216.8958,"s":[[-19.164,30.9756,78.3,0.3529,0.6208]],"u":[[-16.7012,29.7155,77.25,0.3703,0.6208]]},{"I":216.8993,"s":[[-18.4219,30.6219,78.1,0.3578,0.6208]],"u":[[-17.5262,30.1662,77.7,0.3641,0.6208]]},{"I":216.8993,"s":[[-18.4219,30.6219,78.1,0.3578,0.6208]],"u":[[-17.5262,30.1662,77.7,0.3641,0.6208]]},{"I":216.9028,"s":[],"u":[]},{"I":216.9028,"s":[],"u":[]},{"I":216.9167,"s":[],"u":[]},{"I":216.9167,"s":[],"u":[]},{"I":216.9444,"s":[],"u":[]},{"I":216.9444,"s":[],"u":[]},{"I":217,"s":[],"u":[]},{"I":217,"s":[],"u":[]},{"I":217.1111,"s":[],"u":[]},{"I":217.1111,"s":[],"u":[]},{"I":217.3333,"s":[],"u":[]},{"I":217.3333,"s":[],"u":[]},{"I":218.2222,"s":[],"u":[]},{"I":220,"s":[],"u":[]},{"I":221.7778,"s":[],"u":[]},{"I":223.5556,"s":[],"u":[]},{"I":225.3333,"s":[],"u":[]},{"I":227.1111,"s":[],"u":[]},{"I":228.8889,"s":[],"u":[]},{"I":230.6667,"s":[],"u":[]},{"I":232.4444,"s":[],"u":[]},{"I":234.2222,"s":[],"u":[]},{"I":236,"s":[],"u":[]},{"I":237.7778,"s":[],"u":[]},{"I":239.5556,"s":[],"u":[]},{"I":241.3333,"s":[],"u":[]},{"I":243.1111,"s":[],"u":[]},{"I":244.8889,"s":[],"u":[]},{"I":246.6667,"s":[],"u":[]},{"I":248.4444,"s":[],"u":[]},{"I":250.2222,"s":[],"u":[]},{"I":252,"s":[],"u":[]},{"I":253.7778,"s":[],"u":[]},{"I":255.5556,"s":[],"u":[]},{"I":257.3333,"s":[],"u":[]},{"I":259.1111,"s":[],"u":[]},{"I":260.8889,"s":[],"u":[]},{"I":262.6667,"s":[],"u":[]},{"I":264.4444,"s":[],"u":[]},{"I":266.2222,"s":[],"u":[]},{"I":268,"s":[],"u":[]},{"I":269.7778,"s":[],"u":[]},{"I":271.5556,"s":[],"u":[]},{"I":273.3333,"s":[],"u":[]},{"I":275.1111,"s":[],"u":[]},{"I":276.8889,"s":[],"u":[]},{"I":278.6667,"s":[],"u":[]},{"I":280.4444,"s":[],"u":[]},{"I":282.2222,"s":[],"u":[]},{"I":284,"s":[],"u":[]},{"I":285.7778,"s":[],"u":[]},{"I":287.5556,"s":[],"u":[]},{"I":289.3333,"s":[],"u":[]},{"I":291.1111,"s":[],"u":[]},{"I":292.8889,"s":[],"u":[]},{"I":294.6667,"s":[],"u":[]},{"I":296.4444,"s":[],"u":[]},{"I":298.2222,"s":[],"u":[]},{"I":300,"s":[],"u":[]}],"cyc":[{"kind":"SNP","I":88.2934,"period":129.6},{"kind":"SNP","I":216.901,"period":78.1}]},"2":{"rows":[{"I":-20,"s":[],"u":[]},{"I":-19.1667,"s":[],"u":[]},{"I":-18.3333,"s":[],"u":[]},{"I":-17.5,"s":[],"u":[]},{"I":-16.6667,"s":[],"u":[]},{"I":-15.8333,"s":[],"u":[]},{"I":-15,"s":[],"u":[]},{"I":-14.1667,"s":[],"u":[]},{"I":-13.3333,"s":[],"u":[]},{"I":-12.5,"s":[],"u":[]},{"I":-11.6667,"s":[],"u":[]},{"I":-10.8333,"s":[],"u":[]},{"I":-10,"s":[],"u":[]},{"I":-9.1667,"s":[],"u":[]},{"I":-8.3333,"s":[],"u":[]},{"I":-7.5,"s":[],"u":[]},{"I":-6.6667,"s":[],"u":[]},{"I":-5.8333,"s":[],"u":[]},{"I":-5,"s":[],"u":[]},{"I":-4.1667,"s":[],"u":[]},{"I":-3.3333,"s":[],"u":[]},{"I":-2.5,"s":[],"u":[]},{"I":-1.6667,"s":[],"u":[]},{"I":-0.8333,"s":[],"u":[]},{"I":0,"s":[],"u":[]},{"I":0.8333,"s":[],"u":[]},{"I":1.6667,"s":[],"u":[]},{"I":2.5,"s":[],"u":[]},{"I":3.3333,"s":[],"u":[]},{"I":4.1667,"s":[],"u":[]},{"I":5,"s":[],"u":[]},{"I":5.8333,"s":[],"u":[]},{"I":6.6667,"s":[],"u":[]},{"I":7.5,"s":[],"u":[]},{"I":8.3333,"s":[],"u":[]},{"I":9.1667,"s":[],"u":[]},{"I":10,"s":[],"u":[]},{"I":10.8333,"s":[],"u":[]},{"I":11.6667,"s":[],"u":[]},{"I":12.5,"s":[],"u":[]},{"I":13.3333,"s":[],"u":[]},{"I":14.1667,"s":[],"u":[]},{"I":15,"s":[],"u":[]},{"I":15.8333,"s":[],"u":[]},{"I":16.6667,"s":[],"u":[]},{"I":17.5,"s":[],"u":[]},{"I":18.3333,"s":[],"u":[]},{"I":19.1667,"s":[],"u":[]},{"I":20,"s":[],"u":[]},{"I":20.8333,"s":[],"u":[]},{"I":21.6667,"s":[],"u":[]},{"I":22.5,"s":[],"u":[]},{"I":23.3333,"s":[],"u":[]},{"I":24.1667,"s":[],"u":[]},{"I":25,"s":[],"u":[]},{"I":25.8333,"s":[],"u":[]},{"I":26.6667,"s":[],"u":[]},{"I":27.5,"s":[],"u":[]},{"I":28.3333,"s":[],"u":[]},{"I":29.1667,"s":[],"u":[]},{"I":30,"s":[],"u":[]},{"I":30.8333,"s":[],"u":[]},{"I":31.6667,"s":[],"u":[]},{"I":32.5,"s":[],"u":[]},{"I":33.3333,"s":[],"u":[]},{"I":34.1667,"s":[],"u":[]},{"I":35,"s":[],"u":[]},{"I":35.8333,"s":[],"u":[]},{"I":36.6667,"s":[],"u":[]},{"I":37.5,"s":[],"u":[]},{"I":38.3333,"s":[],"u":[]},{"I":39.1667,"s":[],"u":[]},{"I":39.5833,"s":[],"u":[]},{"I":39.7917,"s":[],"u":[]},{"I":39.8958,"s":[],"u":[]},{"I":39.9479,"s":[],"u":[]},{"I":39.9609,"s":[],"u":[]},{"I":39.9642,"s":[[-47.5797,30.133,5496.9,0.0034,0.4147]],"u":[]},{"I":39.9674,"s":[[-47.5789,30.1335,2717.1,0.0034,0.4147]],"u":[]},{"I":39.974,"s":[[-47.5773,30.134,1722.1,0.0034,0.4147]],"u":[]},{"I":40,"s":[[-47.571,30.1381,943.6,0.0034,0.4148]],"u":[]},{"I":40.8333,"s":[[-47.3675,30.2743,211.9,0.0036,0.4157]],"u":[]},{"I":41.6667,"s":[[-47.1645,30.4076,157.2,0.0038,0.4167]],"u":[]},{"I":42.5,"s":[[-46.9622,30.5419,132.3,0.004,0.4177]],"u":[]},{"I":43.3333,"s":[[-46.7603,30.6715,117.3,0.0042,0.4186]],"u":[]},{"I":44.1667,"s":[[-46.5589,30.8015,107,0.0044,0.4196]],"u":[]},{"I":45,"s":[[-46.3579,30.9294,99.3,0.0047,0.4205]],"u":[]},{"I":45.8333,"s":[[-46.1575,31.0522,93.4,0.0049,0.4214]],"u":[]},{"I":46.6667,"s":[[-45.9572,31.1766,88.5,0.0052,0.4224]],"u":[]},{"I":47.5,"s":[[-45.7572,31.2976,84.5,0.0054,0.4233]],"u":[]},{"I":48.3333,"s":[[-45.5575,31.4155,81.1,0.0057,0.4242]],"u":[]},{"I":49.1667,"s":[[-45.3583,31.53,78.1,0.006,0.4251]],"u":[]},{"I":50,"s":[[-45.159,31.6422,75.5,0.0063,0.426]],"u":[]},{"I":50.8333,"s":[[-44.96,31.7555,73.3,0.0067,0.427]],"u":[]},{"I":51.6667,"s":[[-44.761,31.8644,71.3,0.007,0.4279]],"u":[]},{"I":52.5,"s":[[-44.5622,31.9706,69.4,0.0073,0.4287]],"u":[]},{"I":53.3333,"s":[[-44.3633,32.0746,67.8,0.0077,0.4296]],"u":[]},{"I":54.1667,"s":[[-44.1646,32.1761,66.3,0.0081,0.4305]],"u":[]},{"I":55,"s":[[-43.9658,32.2754,64.9,0.0085,0.4314]],"u":[]},{"I":55.8333,"s":[[-43.767,32.3699,63.6,0.0089,0.4323]],"u":[]},{"I":56.6667,"s":[[-43.5681,32.4673,62.5,0.0093,0.4331]],"u":[]},{"I":57.5,"s":[[-43.3689,32.5572,61.5,0.0097,0.434]],"u":[]},{"I":58.3333,"s":[[-43.1697,32.6475,60.5,0.0102,0.4349]],"u":[]},{"I":59.1667,"s":[[-42.9703,32.7365,59.5,0.0106,0.4357]],"u":[]},{"I":60,"s":[[-42.7709,32.8234,58.6,0.0111,0.4366]],"u":[]},{"I":60.8333,"s":[[-42.5711,32.9075,57.8,0.0116,0.4374]],"u":[]},{"I":61.6667,"s":[[-42.371,32.9898,57,0.0121,0.4383]],"u":[]},{"I":62.5,"s":[[-42.1706,33.0678,56.3,0.0126,0.4391]],"u":[]},{"I":63.3333,"s":[[-41.9697,33.1473,55.6,0.0132,0.44]],"u":[]},{"I":64.1667,"s":[[-41.7683,33.2216,55,0.0137,0.4408]],"u":[]},{"I":65,"s":[[-41.5669,33.2969,54.3,0.0143,0.4416]],"u":[]},{"I":65.8333,"s":[[-41.3645,33.3663,53.7,0.0149,0.4425]],"u":[]},{"I":66.6667,"s":[[-41.162,33.4384,53.2,0.0155,0.4433]],"u":[]},{"I":67.5,"s":[[-40.9588,33.5056,52.7,0.0161,0.4441]],"u":[]},{"I":68.3333,"s":[[-40.7547,33.572,52.1,0.0167,0.4449]],"u":[]},{"I":69.1667,"s":[[-40.5502,33.6358,51.7,0.0174,0.4457]],"u":[]},{"I":70,"s":[[-40.3448,33.6968,51.2,0.018,0.4465]],"u":[]},{"I":70.8333,"s":[[-40.139,33.7556,50.8,0.0187,0.4473]],"u":[]},{"I":71.6667,"s":[[-39.932,33.8168,50.3,0.0194,0.4481]],"u":[]},{"I":72.5,"s":[[-39.7244,33.8724,49.9,0.0201,0.449]],"u":[]},{"I":73.3333,"s":[[-39.5158,33.926,49.6,0.0209,0.4498]],"u":[]},{"I":74.1667,"s":[[-39.3061,33.9793,49.1,0.0216,0.4506]],"u":[]},{"I":75,"s":[[-39.0952,34.0334,48.8,0.0224,0.4513]],"u":[]},{"I":75.8333,"s":[[-38.8833,34.0814,48.5,0.0232,0.4521]],"u":[]},{"I":76.6667,"s":[[-38.67,34.1306,48.1,0.024,0.4529]],"u":[]},{"I":77.5,"s":[[-38.456,34.1767,47.8,0.0248,0.4537]],"u":[]},{"I":78.3333,"s":[[-38.2402,34.2206,47.5,0.0256,0.4545]],"u":[]},{"I":79.1667,"s":[[-38.0231,34.2618,47.2,0.0265,0.4553]],"u":[]},{"I":80,"s":[[-37.8041,34.3026,46.9,0.0274,0.456]],"u":[]},{"I":80.8333,"s":[[-37.584,34.3426,46.6,0.0283,0.4568]],"u":[]},{"I":81.6667,"s":[[-37.3619,34.3786,46.4,0.0292,0.4576]],"u":[]},{"I":82.5,"s":[[-37.138,34.4142,46.1,0.0301,0.4584]],"u":[]},{"I":83.3333,"s":[[-36.9125,34.4493,45.8,0.0311,0.4591]],"u":[]},{"I":84.1667,"s":[[-36.6844,34.4816,45.6,0.032,0.4599]],"u":[]},{"I":85,"s":[[-36.4542,34.5114,45.3,0.033,0.4607]],"u":[]},{"I":85.8333,"s":[[-36.2223,34.5399,45.1,0.034,0.4614]],"u":[]},{"I":86.6667,"s":[[-35.9874,34.5662,44.9,0.0351,0.4622]],"u":[]},{"I":87.5,"s":[[-35.75,34.5909,44.7,0.0361,0.4629]],"u":[]},{"I":88.3333,"s":[[-35.5095,34.6128,44.5,0.0372,0.4637]],"u":[]},{"I":89.1667,"s":[[-35.2666,34.6342,44.3,0.0383,0.4645]],"u":[]},{"I":90,"s":[[-35.0203,34.6498,44,0.0394,0.4652]],"u":[]},{"I":90.8333,"s":[[-34.7705,34.6693,43.9,0.0406,0.4659]],"u":[]},{"I":91.6667,"s":[[-34.5171,34.6815,43.7,0.0418,0.4667]],"u":[]},{"I":92.5,"s":[[-34.2598,34.6963,43.5,0.043,0.4674]],"u":[]},{"I":93.3333,"s":[[-33.9981,34.7048,43.4,0.0442,0.4682]],"u":[]},{"I":94.1667,"s":[[-33.7324,34.7135,43.2,0.0455,0.4689]],"u":[]},{"I":95,"s":[[-33.4612,34.7199,43,0.0468,0.4696]],"u":[]},{"I":95.8333,"s":[[-33.1855,34.7226,42.8,0.0481,0.4704]],"u":[]},{"I":96.6667,"s":[[-32.9038,34.7232,42.7,0.0495,0.4711]],"u":[]},{"I":97.5,"s":[[-32.6159,34.7204,42.5,0.0509,0.4718]],"u":[]},{"I":97.7083,"s":[[-32.5425,34.7197,42.5,0.0513,0.472]],"u":[]},{"I":97.7344,"s":[[-32.5338,34.7194,42.5,0.0513,0.472]],"u":[]},{"I":97.7474,"s":[[-32.5292,34.7182,42.4,0.0513,0.472]],"u":[]},{"I":97.7539,"s":[[-32.5269,34.7174,42.4,0.0513,0.472]],"u":[]},{"I":97.7572,"s":[[-32.5257,34.717,42.5,0.0514,0.4721]],"u":[]},{"I":97.7604,"s":[[-32.5246,34.7164,42.4,0.0514,0.4721]],"u":[[7.9566,8.7217,24.9,0.3936,0.399]]},{"I":97.8125,"s":[[-32.5063,34.7191,42.5,0.0514,0.4721]],"u":[[8.0326,8.6521,24.95,0.3942,0.3986]]},{"I":97.9167,"s":[[-32.4693,34.7173,42.4,0.0516,0.4722]],"u":[[7.1741,9.5063,25,0.3879,0.4044]]},{"I":98.3333,"s":[[-32.321,34.7142,42.3,0.0524,0.4725]],"u":[[6.1716,10.5153,25.05,0.3803,0.411]]},{"I":99.1667,"s":[[-32.0196,34.7046,42.2,0.0538,0.4733]],"u":[[4.7818,11.9039,25.3,0.3691,0.4196]]},{"I":100,"s":[[-31.7099,34.6936,42.1,0.0554,0.474]],"u":[[3.7589,12.9257,25.55,0.3604,0.4256]]},{"I":100.8333,"s":[[-31.3911,34.6796,41.9,0.057,0.4747]],"u":[[2.8837,13.7993,25.8,0.3526,0.4304]]},{"I":101.6667,"s":[[-31.0631,34.6572,41.7,0.0586,0.4754]],"u":[[2.0882,14.5921,26.05,0.3452,0.4346]]},{"I":102.5,"s":[[-30.7243,34.6366,41.6,0.0603,0.4761]],"u":[[1.3413,15.3354,26.35,0.338,0.4384]]},{"I":103.3333,"s":[[-30.3733,34.6072,41.5,0.0621,0.4768]],"u":[[0.6226,16.0483,26.65,0.331,0.4418]]},{"I":104.1667,"s":[[-30.0089,34.5723,41.3,0.064,0.4775]],"u":[[-0.0791,16.742,26.95,0.3238,0.4451]]},{"I":105,"s":[[-29.6295,34.5348,41.2,0.0659,0.4782]],"u":[[-0.773,17.4258,27.35,0.3166,0.4481]]},{"I":105.8333,"s":[[-29.2329,34.4894,41.1,0.0679,0.4789]],"u":[[-1.4678,18.1069,27.7,0.3092,0.451]]},{"I":106.6667,"s":[[-28.8167,34.4356,41,0.0701,0.4795]],"u":[[-2.1707,18.7916,28.05,0.3016,0.4538]]},{"I":107.5,"s":[[-28.3777,34.3721,40.9,0.0724,0.4802]],"u":[[-2.8878,19.485,28.5,0.2936,0.4565]]},{"I":108.3333,"s":[[-27.9114,34.2984,40.8,0.0748,0.4809]],"u":[[-3.6263,20.1929,28.9,0.2853,0.4591]]},{"I":109.1667,"s":[[-27.4132,34.2154,40.6,0.0774,0.4815]],"u":[[-4.3952,20.9214,29.35,0.2765,0.4616]]},{"I":110,"s":[[-26.8763,34.1152,40.5,0.0803,0.4821]],"u":[[-5.2031,21.6764,29.9,0.2672,0.4641]]},{"I":110.8333,"s":[[-26.2913,33.995,40.2,0.0835,0.4827]],"u":[[-6.0621,22.466,30.4,0.2573,0.4665]]},{"I":111.6667,"s":[[-25.6451,33.8501,40.1,0.087,0.4833]],"u":[[-6.9884,23.2995,31,0.2466,0.4689]]},{"I":112.5,"s":[[-24.9176,33.6738,39.9,0.091,0.4839]],"u":[[-8.0048,24.1902,31.7,0.2349,0.4713]]},{"I":113.3333,"s":[[-24.0762,33.4448,39.6,0.0958,0.4844]],"u":[[-9.1479,25.1577,32.45,0.2219,0.4737]]},{"I":114.1667,"s":[[-23.0599,33.1407,39.3,0.1018,0.4848]],"u":[[-10.4815,26.2354,33.35,0.2071,0.4762]]},{"I":115,"s":[[-21.7313,32.6903,38.9,0.1101,0.4851]],"u":[[-12.1484,27.4979,34.35,0.1894,0.4788]]},{"I":115.8333,"s":[[-19.5366,31.8097,38.1,0.1249,0.4849]],"u":[[-14.7074,29.2345,35.9,0.1644,0.4819]]},{"I":116.0417,"s":[[-18.3754,31.2725,37.7,0.1335,0.4844]],"u":[[-15.9647,29.9937,36.55,0.1531,0.483]]},{"I":116.0417,"s":[[-18.3754,31.2725,37.7,0.1335,0.4844]],"u":[[-15.9647,29.9937,36.55,0.1531,0.483]]},{"I":116.0938,"s":[[-17.7695,30.974,37.4,0.1382,0.4842]],"u":[[-16.5867,30.3462,36.85,0.1478,0.4834]]},{"I":116.0938,"s":[[-17.7695,30.974,37.4,0.1382,0.4842]],"u":[[-16.5867,30.3462,36.85,0.1478,0.4834]]},{"I":116.1068,"s":[[-17.4628,30.8144,37.2,0.1406,0.484]],"u":[[-16.9059,30.5213,37.05,0.1452,0.4836]]},{"I":116.1068,"s":[[-17.4628,30.8144,37.2,0.1406,0.484]],"u":[[-16.9059,30.5213,37.05,0.1452,0.4836]]},{"I":116.11,"s":[[-17.2957,30.7276,37.2,0.142,0.4839]],"u":[]},{"I":116.11,"s":[[-17.2957,30.7276,37.2,0.142,0.4839]],"u":[]},{"I":116.1133,"s":[],"u":[]},{"I":116.1133,"s":[],"u":[]},{"I":116.1198,"s":[],"u":[]},{"I":116.1198,"s":[],"u":[]},{"I":116.1458,"s":[],"u":[]},{"I":116.1458,"s":[],"u":[]},{"I":116.25,"s":[],"u":[]},{"I":116.25,"s":[],"u":[]},{"I":116.6667,"s":[],"u":[]},{"I":117.5,"s":[],"u":[]},{"I":118.3333,"s":[],"u":[]},{"I":119.1667,"s":[],"u":[]},{"I":120,"s":[],"u":[]},{"I":120.8333,"s":[],"u":[]},{"I":121.6667,"s":[],"u":[]},{"I":122.5,"s":[],"u":[]},{"I":123.3333,"s":[],"u":[]},{"I":124.1667,"s":[],"u":[]},{"I":125,"s":[],"u":[]},{"I":125.8333,"s":[],"u":[]},{"I":126.6667,"s":[],"u":[]},{"I":127.5,"s":[],"u":[]},{"I":128.3333,"s":[],"u":[]},{"I":129.1667,"s":[],"u":[]},{"I":130,"s":[],"u":[]}],"cyc":[{"kind":"SNIC","I":39.9626,"period":5496.9},{"kind":"SNP","I":116.1117,"period":37.2}]},"3":{"rows":[{"I":-20,"s":[],"u":[]},{"I":-19.1667,"s":[],"u":[]},{"I":-18.3333,"s":[],"u":[]},{"I":-17.5,"s":[],"u":[]},{"I":-16.6667,"s":[],"u":[]},{"I":-15.8333,"s":[],"u":[]},{"I":-15,"s":[],"u":[]},{"I":-14.1667,"s":[],"u":[]},{"I":-13.3333,"s":[],"u":[]},{"I":-12.5,"s":[],"u":[]},{"I":-11.6667,"s":[],"u":[]},{"I":-10.8333,"s":[],"u":[]},{"I":-10,"s":[],"u":[]},{"I":-9.1667,"s":[],"u":[]},{"I":-8.3333,"s":[],"u":[]},{"I":-7.5,"s":[],"u":[]},{"I":-6.6667,"s":[],"u":[]},{"I":-5.8333,"s":[],"u":[]},{"I":-5,"s":[],"u":[]},{"I":-4.1667,"s":[],"u":[]},{"I":-3.3333,"s":[],"u":[]},{"I":-2.5,"s":[],"u":[]},{"I":-1.6667,"s":[],"u":[]},{"I":-0.8333,"s":[],"u":[]},{"I":0,"s":[],"u":[]},{"I":0.8333,"s":[],"u":[]},{"I":1.6667,"s":[],"u":[]},{"I":2.5,"s":[],"u":[]},{"I":3.3333,"s":[],"u":[]},{"I":4.1667,"s":[],"u":[]},{"I":5,"s":[],"u":[]},{"I":5.8333,"s":[],"u":[]},{"I":6.6667,"s":[],"u":[]},{"I":7.5,"s":[],"u":[]},{"I":8.3333,"s":[],"u":[]},{"I":9.1667,"s":[],"u":[]},{"I":10,"s":[],"u":[]},{"I":10.8333,"s":[],"u":[]},{"I":11.6667,"s":[],"u":[]},{"I":12.5,"s":[],"u":[]},{"I":13.3333,"s":[],"u":[]},{"I":14.1667,"s":[],"u":[]},{"I":15,"s":[],"u":[]},{"I":15.8333,"s":[],"u":[]},{"I":16.6667,"s":[],"u":[]},{"I":17.5,"s":[],"u":[]},{"I":18.3333,"s":[],"u":[]},{"I":19.1667,"s":[],"u":[]},{"I":20,"s":[],"u":[]},{"I":20.8333,"s":[],"u":[]},{"I":21.6667,"s":[],"u":[]},{"I":22.5,"s":[],"u":[]},{"I":23.3333,"s":[],"u":[]},{"I":24.1667,"s":[],"u":[]},{"I":25,"s":[],"u":[]},{"I":25.8333,"s":[],"u":[]},{"I":26.6667,"s":[],"u":[]},{"I":27.5,"s":[],"u":[]},{"I":28.3333,"s":[],"u":[]},{"I":29.1667,"s":[],"u":[]},{"I":30,"s":[],"u":[]},{"I":30.8333,"s":[],"u":[]},{"I":31.6667,"s":[],"u":[]},{"I":32.5,"s":[],"u":[]},{"I":33.3333,"s":[],"u":[]},{"I":34.1667,"s":[],"u":[]},{"I":35,"s":[],"u":[]},{"I":35.0065,"s":[],"u":[]},{"I":35.0098,"s":[[-22.2907,16.0211,106.4,0.0191,0.4118]],"u":[]},{"I":35.013,"s":[[-22.272,16.0215,97.8,0.0191,0.4118]],"u":[]},{"I":35.026,"s":[[-22.2128,16.0229,84.7,0.0193,0.4119]],"u":[]},{"I":35.0521,"s":[[-22.1189,16.0262,74.7,0.0196,0.4119]],"u":[]},{"I":35.1042,"s":[[-21.9649,16.0319,66,0.0201,0.412]],"u":[]},{"I":35.2083,"s":[[-21.7095,16.0493,57.7,0.0209,0.4122]],"u":[]},{"I":35.4167,"s":[[-21.2828,16.0794,50,0.0224,0.4126]],"u":[]},{"I":35.8333,"s":[[-20.5624,16.1359,42.7,0.0252,0.4134]],"u":[]},{"I":36.25,"s":[[-19.9173,16.1865,38.6,0.028,0.4142]],"u":[]},{"I":36.263,"s":[[-19.8978,16.1862,38.5,0.0281,0.4142]],"u":[]},{"I":36.2695,"s":[[-19.888,16.1862,38.4,0.0281,0.4142]],"u":[]},{"I":36.2728,"s":[[-19.8832,16.1887,38.4,0.0282,0.4142]],"u":[[4.0279,4.7821,16.55,0.2899,0.2994]]},{"I":36.276,"s":[[-19.8783,16.1889,38.4,0.0282,0.4142]],"u":[[4.0243,4.7861,16.55,0.2898,0.2994]]},{"I":36.3021,"s":[[-19.8394,16.1889,38.2,0.0284,0.4142]],"u":[[3.9662,4.8471,16.6,0.2891,0.3002]]},{"I":36.3542,"s":[[-19.7619,16.1964,37.8,0.0287,0.4143]],"u":[[4.0594,4.7648,16.6,0.2904,0.2992],[3.304,5.4883,16.6,0.2806,0.3082]]},{"I":36.4583,"s":[[-19.6079,16.2068,37.1,0.0294,0.4145]],"u":[[3.0829,5.712,16.6,0.2778,0.311]]},{"I":36.6667,"s":[[-19.3034,16.2268,35.8,0.0309,0.4148]],"u":[[1.9907,6.725,16.7,0.2635,0.3232]]},{"I":37.5,"s":[[-18.0933,16.2805,31.8,0.0375,0.4159]],"u":[[-0.413,8.8086,17.1,0.2314,0.3473]]},{"I":38.3333,"s":[[-16.8194,16.2751,28.8,0.0455,0.4166]],"u":[[-2.2791,10.2812,17.55,0.2061,0.3634]]},{"I":39.1667,"s":[[-15.3645,16.1721,26.4,0.056,0.4165]],"u":[[-4.1315,11.6085,18.15,0.1811,0.3772]]},{"I":40,"s":[[-13.4364,15.8591,24,0.0724,0.4147]],"u":[[-6.3503,13.007,19.05,0.1519,0.3908]]},{"I":40.4167,"s":[[-11.8705,15.4555,22.6,0.0875,0.4119]],"u":[[-8.0306,13.9157,19.9,0.1308,0.3991]]},{"I":40.4167,"s":[[-11.8705,15.4555,22.6,0.0875,0.4119]],"u":[[-8.0306,13.9157,19.9,0.1308,0.3991]]},{"I":40.5208,"s":[[-11.1997,15.2446,22,0.0945,0.4103]],"u":[[-8.725,14.2511,20.3,0.1224,0.4021]]},{"I":40.5208,"s":[[-11.1997,15.2446,22,0.0945,0.4103]],"u":[[-8.725,14.2511,20.3,0.1224,0.4021]]},{"I":40.5729,"s":[[-10.6691,15.0585,21.6,0.1002,0.4088]],"u":[[-9.2837,14.5037,20.65,0.1158,0.4042]]},{"I":40.5729,"s":[[-10.6691,15.0585,21.6,0.1002,0.4088]],"u":[[-9.2837,14.5037,20.65,0.1158,0.4042]]},{"I":40.5859,"s":[[-10.4031,14.9592,21.4,0.1031,0.408]],"u":[[-9.5182,14.6048,20.8,0.1131,0.4051]]},{"I":40.5859,"s":[[-10.4031,14.9592,21.4,0.1031,0.408]],"u":[[-9.5182,14.6048,20.8,0.1131,0.4051]]},{"I":40.5924,"s":[[-10.2566,14.9038,21.3,0.1047,0.4076]],"u":[[-9.6995,14.6806,20.9,0.111,0.4057]]},{"I":40.5924,"s":[[-10.2566,14.9038,21.3,0.1047,0.4076]],"u":[[-9.6995,14.6806,20.9,0.111,0.4057]]},{"I":40.5957,"s":[[-9.9706,14.7894,21.1,0.1079,0.4066]],"u":[]},{"I":40.5957,"s":[[-9.9706,14.7894,21.1,0.1079,0.4066]],"u":[]},{"I":40.599,"s":[],"u":[]},{"I":40.599,"s":[],"u":[]},{"I":40.625,"s":[],"u":[]},{"I":40.625,"s":[],"u":[]},{"I":40.8333,"s":[],"u":[]},{"I":41.6667,"s":[],"u":[]},{"I":42.5,"s":[],"u":[]},{"I":43.3333,"s":[],"u":[]},{"I":44.1667,"s":[],"u":[]},{"I":45,"s":[],"u":[]},{"I":45.8333,"s":[],"u":[]},{"I":46.6667,"s":[],"u":[]},{"I":47.5,"s":[],"u":[]},{"I":48.3333,"s":[],"u":[]},{"I":49.1667,"s":[],"u":[]},{"I":50,"s":[],"u":[]},{"I":50.8333,"s":[],"u":[]},{"I":51.6667,"s":[],"u":[]},{"I":52.5,"s":[],"u":[]},{"I":53.3333,"s":[],"u":[]},{"I":54.1667,"s":[],"u":[]},{"I":55,"s":[],"u":[]},{"I":55.8333,"s":[],"u":[]},{"I":56.6667,"s":[],"u":[]},{"I":57.5,"s":[],"u":[]},{"I":58.3333,"s":[],"u":[]},{"I":59.1667,"s":[],"u":[]},{"I":60,"s":[],"u":[]},{"I":60.8333,"s":[],"u":[]},{"I":61.6667,"s":[],"u":[]},{"I":62.5,"s":[],"u":[]},{"I":63.3333,"s":[],"u":[]},{"I":64.1667,"s":[],"u":[]},{"I":65,"s":[],"u":[]},{"I":65.8333,"s":[],"u":[]},{"I":66.6667,"s":[],"u":[]},{"I":67.5,"s":[],"u":[]},{"I":68.3333,"s":[],"u":[]},{"I":69.1667,"s":[],"u":[]},{"I":70,"s":[],"u":[]},{"I":70.8333,"s":[],"u":[]},{"I":71.6667,"s":[],"u":[]},{"I":72.5,"s":[],"u":[]},{"I":73.3333,"s":[],"u":[]},{"I":74.1667,"s":[],"u":[]},{"I":75,"s":[],"u":[]},{"I":75.8333,"s":[],"u":[]},{"I":76.6667,"s":[],"u":[]},{"I":77.5,"s":[],"u":[]},{"I":78.3333,"s":[],"u":[]},{"I":79.1667,"s":[],"u":[]},{"I":80,"s":[],"u":[]},{"I":80.8333,"s":[],"u":[]},{"I":81.6667,"s":[],"u":[]},{"I":82.5,"s":[],"u":[]},{"I":83.3333,"s":[],"u":[]},{"I":84.1667,"s":[],"u":[]},{"I":85,"s":[],"u":[]},{"I":85.8333,"s":[],"u":[]},{"I":86.6667,"s":[],"u":[]},{"I":87.5,"s":[],"u":[]},{"I":88.3333,"s":[],"u":[]},{"I":89.1667,"s":[],"u":[]},{"I":90,"s":[],"u":[]},{"I":90.8333,"s":[],"u":[]},{"I":91.6667,"s":[],"u":[]},{"I":92.5,"s":[],"u":[]},{"I":93.3333,"s":[],"u":[]},{"I":94.1667,"s":[],"u":[]},{"I":95,"s":[],"u":[]},{"I":95.8333,"s":[],"u":[]},{"I":96.6667,"s":[],"u":[]},{"I":97.5,"s":[],"u":[]},{"I":98.3333,"s":[],"u":[]},{"I":99.1667,"s":[],"u":[]},{"I":100,"s":[],"u":[]},{"I":100.8333,"s":[],"u":[]},{"I":101.6667,"s":[],"u":[]},{"I":102.5,"s":[],"u":[]},{"I":103.3333,"s":[],"u":[]},{"I":104.1667,"s":[],"u":[]},{"I":105,"s":[],"u":[]},{"I":105.8333,"s":[],"u":[]},{"I":106.6667,"s":[],"u":[]},{"I":107.5,"s":[],"u":[]},{"I":108.3333,"s":[],"u":[]},{"I":109.1667,"s":[],"u":[]},{"I":110,"s":[],"u":[]},{"I":110.8333,"s":[],"u":[]},{"I":111.6667,"s":[],"u":[]},{"I":112.5,"s":[],"u":[]},{"I":113.3333,"s":[],"u":[]},{"I":114.1667,"s":[],"u":[]},{"I":115,"s":[],"u":[]},{"I":115.8333,"s":[],"u":[]},{"I":116.6667,"s":[],"u":[]},{"I":117.5,"s":[],"u":[]},{"I":118.3333,"s":[],"u":[]},{"I":119.1667,"s":[],"u":[]},{"I":120,"s":[],"u":[]},{"I":120.8333,"s":[],"u":[]},{"I":121.6667,"s":[],"u":[]},{"I":122.5,"s":[],"u":[]},{"I":123.3333,"s":[],"u":[]},{"I":124.1667,"s":[],"u":[]},{"I":125,"s":[],"u":[]},{"I":125.8333,"s":[],"u":[]},{"I":126.6667,"s":[],"u":[]},{"I":127.5,"s":[],"u":[]},{"I":128.3333,"s":[],"u":[]},{"I":129.1667,"s":[],"u":[]},{"I":130,"s":[],"u":[]}],"cyc":[{"kind":"HOM","I":35.0081,"period":106.4},{"kind":"SNP","I":40.5973,"period":21.1}]}};
+</script>
+<script>
+(function () {
+"use strict";
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (x, d = 3) => (x === undefined || x === null || !isFinite(x)) ? "—" : (Math.abs(x) < 1e-12 ? "0" : x.toFixed(d));
+const PKEYS = [["gCa", "g_Ca"], ["gK", "g_K"], ["gL", "g_L"], ["ECa", "E_Ca"], ["EK", "E_K"], ["EL", "E_L"], ["V1", "V1"], ["V2", "V2"], ["V3", "V3"], ["V4", "V4"], ["C", "C"], ["phi", "φ"]];
+const DEFAULT_I = { 1: 100, 2: 0, 3: 36.8 };
+const DEFAULT_TRAJ = { 1: [[-40, 0.02]], 2: [[-20, 0.0], [-15, 0.0]], 3: [[-30, 0.02], [-5, 0.25]] };
+const VIEW0 = { xr: [-75, 50], yr: [-0.05, 0.72] };
+const TRAJ_COLORS = ["#0e8f86", "#b07d0b", "#4d6b85", "#8a5a9e", "#a0522d", "#c0399a"];
+
+const S = {
+  set: 1, params: { ...SETS[1] }, I: DEFAULT_I[1], tab: "phase",
+  view: JSON.parse(JSON.stringify(VIEW0)), trajIC: DEFAULT_TRAJ[1].slice(), T: 400,
+  eps: 0.5, field: true, man: true, orb: true, family: "", showWt: false,
+  bifY: "v", unit: "hz", ovl: { 1: true, 2: true, 3: true }, showUnstF: false, zoomOnset: false,
+};
+let M = makeModel(S.params);
+let cache = { eqs: [], trajs: [], man: [], orbits: [], orbitsI: null, orbBusy: false };
+const bifCache = {}; // key -> {branch, rows, cyc}
+
+function paramKey(p) { return PKEYS.map(([k]) => p[k]).join(","); }
+function isDefault() { const d = SETS[S.set]; return PKEYS.every(([k]) => +S.params[k] === +d[k]); }
+
+// ---------- default (precomputed) diagrams ----------
+function unpackRows(rows) {
+  return rows.map(r => ({ I: r.I, stable: r.s.map(a => ({ vmin: a[0], vmax: a[1], period: a[2], wmin: a[3], wmax: a[4] })), unstable: r.u.map(a => ({ vmin: a[0], vmax: a[1], period: a[2], wmin: a[3], wmax: a[4] })) }));
+}
+for (const k of [1, 2, 3]) {
+  const m = makeModel(SETS[k]);
+  bifCache[paramKey(SETS[k])] = { branch: eqBranch(m, SETS[k].Irange), rows: unpackRows(PRE[k].rows), cyc: PRE[k].cyc };
+}
+function bifData() { return bifCache[paramKey(S.params)] || null; }
+function branchOnly() { const b = bifData(); return b ? b.branch : eqBranch(M, S.params.Irange); }
+
+// ---------- generic canvas plot ----------
+function niceTicks(a, b, n) {
+  const span = b - a, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const f = raw / p, step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+  const out = []; for (let t = Math.ceil(a / step) * step; t <= b + 1e-9 * span; t += step) out.push(+t.toFixed(10));
+  return { ticks: out, step };
+}
+function makePlot(canvas, margins) {
+  const P = { canvas, m: margins || { l: 54, r: 16, t: 12, b: 40 }, xr: [0, 1], yr: [0, 1] };
+  P.setup = () => {
+    const r = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    P.W = r.width; P.H = r.height;
+    if (canvas.width !== Math.round(r.width * dpr) || canvas.height !== Math.round(r.height * dpr)) { canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr); }
+    const ctx = canvas.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, P.W, P.H); P.ctx = ctx; return ctx;
+  };
+  P.x = v => P.m.l + (v - P.xr[0]) / (P.xr[1] - P.xr[0]) * (P.W - P.m.l - P.m.r);
+  P.y = v => P.H - P.m.b - (v - P.yr[0]) / (P.yr[1] - P.yr[0]) * (P.H - P.m.t - P.m.b);
+  P.ix = px => P.xr[0] + (px - P.m.l) / (P.W - P.m.l - P.m.r) * (P.xr[1] - P.xr[0]);
+  P.iy = py => P.yr[0] + (P.H - P.m.b - py) / (P.H - P.m.t - P.m.b) * (P.yr[1] - P.yr[0]);
+  P.inside = (px, py) => px >= P.m.l && px <= P.W - P.m.r && py >= P.m.t && py <= P.H - P.m.b;
+  P.axes = (xlabel, ylabel, opt = {}) => {
+    const c = P.ctx, line = css("--line"), soft = css("--soft"), muted = css("--muted");
+    c.save(); c.font = "11px " + css("--font-mono"); c.fillStyle = muted; c.lineWidth = 1;
+    const xt = niceTicks(P.xr[0], P.xr[1], Math.max(3, Math.floor((P.W - P.m.l - P.m.r) / 80)));
+    const yt = niceTicks(P.yr[0], P.yr[1], Math.max(3, Math.floor((P.H - P.m.t - P.m.b) / 50)));
+    c.strokeStyle = soft; c.beginPath();
+    for (const t of xt.ticks) { const X = Math.round(P.x(t)) + 0.5; c.moveTo(X, P.m.t); c.lineTo(X, P.H - P.m.b); }
+    for (const t of yt.ticks) { const Y = Math.round(P.y(t)) + 0.5; c.moveTo(P.m.l, Y); c.lineTo(P.W - P.m.r, Y); }
+    c.stroke();
+    c.strokeStyle = line; c.strokeRect(P.m.l + 0.5, P.m.t + 0.5, P.W - P.m.l - P.m.r - 1, P.H - P.m.t - P.m.b - 1);
+    const dx = xt.step < 1 ? Math.min(3, Math.ceil(-Math.log10(xt.step))) : 0, dy = yt.step < 1 ? Math.min(3, Math.ceil(-Math.log10(yt.step))) : 0;
+    c.textAlign = "center"; c.textBaseline = "top";
+    for (const t of xt.ticks) c.fillText(t.toFixed(dx), P.x(t), P.H - P.m.b + 5);
+    c.textAlign = "right"; c.textBaseline = "middle";
+    for (const t of yt.ticks) c.fillText(t.toFixed(dy), P.m.l - 6, P.y(t));
+    c.font = "12px " + css("--font-body"); c.fillStyle = muted;
+    c.textAlign = "center"; c.textBaseline = "bottom"; c.fillText(xlabel, P.m.l + (P.W - P.m.l - P.m.r) / 2, P.H - 3);
+    c.save(); c.translate(13, P.m.t + (P.H - P.m.t - P.m.b) / 2); c.rotate(-Math.PI / 2); c.textBaseline = "middle"; c.fillText(ylabel, 0, 0); c.restore();
+    c.restore();
+  };
+  P.clip = () => { const c = P.ctx; c.save(); c.beginPath(); c.rect(P.m.l, P.m.t, P.W - P.m.l - P.m.r, P.H - P.m.t - P.m.b); c.clip(); };
+  P.path = (xs, ys, style) => {
+    const c = P.ctx; c.save(); c.strokeStyle = style.color; c.lineWidth = style.width || 1.5; c.setLineDash(style.dash || []); c.globalAlpha = style.alpha ?? 1; c.lineJoin = "round";
+    c.beginPath(); let pen = false;
+    for (let i = 0; i < xs.length; i++) {
+      const X = P.x(xs[i]), Y = P.y(ys[i]);
+      if (!isFinite(X) || !isFinite(Y) || Math.abs(Y) > 1e5 || Math.abs(X) > 1e5 || (style.breakIf && style.breakIf(i))) { pen = false; continue; }
+      if (!pen) { c.moveTo(X, Y); pen = true; } else c.lineTo(X, Y);
+    }
+    c.stroke(); c.restore();
+  };
+  return P;
+}
+
+// ---------- phase plane ----------
+const PP = makePlot($("phase"), { l: 54, r: 14, t: 12, b: 40 });
+const TS = makePlot($("ts"), { l: 54, r: 50, t: 10, b: 36 });
+
+function nullBranches(I) {
+  // local extrema of v-nullcline in view range
+  const ext = []; let prev = null, prevS = null;
+  for (let v = -90; v <= 80; v += 0.1) {
+    const s = M.vnull(v + 0.05, I) - M.vnull(v - 0.05, I);
+    if (prevS !== null && s * prevS < 0) ext.push(v);
+    prevS = s;
+  }
+  return ext;
+}
+function branchName(v, ext) {
+  if (ext.length < 2) return "—";
+  if (v < ext[0]) return "left"; if (v < ext[1]) return "middle"; return "right";
+}
+
+function computeLocal() {
+  M = makeModel(S.params);
+  const I = S.I;
+  cache.eqs = equilibria(M, I);
+  cache.trajs = S.trajIC.map(ic => trajectory(M, ic, I, S.T, 0.05));
+  cache.man = [];
+  if (S.man) {
+    const bnd = [S.view.xr[0] - 60, S.view.xr[1] + 60, S.view.yr[0] - 0.6, S.view.yr[1] + 0.6];
+    for (const e of cache.eqs) if (e.type === "saddle") {
+      const u = e.vecs[0], s = e.vecs[1], d = 1e-3;
+      for (const sg of [1, -1]) {
+        cache.man.push({ kind: "u", tr: trajectory(M, [e.v + sg * d * u[0], e.w + sg * d * u[1]], I, 2500, 0.05, 1, bnd) });
+        cache.man.push({ kind: "s", tr: trajectory(M, [e.v + sg * d * s[0], e.w + sg * d * s[1]], I, 2500, 0.02, -1, bnd) });
+      }
+    }
+  }
+}
+
+let orbTimer = null, orbToken = 0;
+function scheduleOrbits() {
+  clearTimeout(orbTimer);
+  if (!S.orb) { cache.orbits = []; cache.orbitsI = null; $("orbInfo").textContent = ""; return; }
+  if (cache.orbitsI !== S.I || cache.orbKey !== paramKey(S.params)) { cache.orbits = []; $("orbInfo").textContent = "Searching for periodic orbits…"; }
+  const tok = ++orbToken;
+  orbTimer = setTimeout(() => {
+    if (tok !== orbToken) return;
+    const I = S.I, key = paramKey(S.params);
+    const seeds = (cache.orbitsRaw || []).filter(c => c.s).map(c => c.s);
+    const r = analyzeI(M, I, seeds);
+    if (tok !== orbToken) return;
+    const orbits = [];
+    for (const c of r.stable) { const tr = trajectory(M, c.s, I, c.period * 1.02, 0.05, 1); orbits.push({ st: true, c, tr }); }
+    for (const c of r.unstable) { const tr = trajectory(M, c.s, I, c.period * 1.02, 0.02, -1); orbits.push({ st: false, c, tr }); }
+    cache.orbits = orbits; cache.orbitsI = I; cache.orbKey = key; cache.orbitsRaw = r.stable.concat(r.unstable);
+    const parts = [];
+    if (r.stable.length) parts.push(r.stable.map(c => `stable cycle T = ${fmt(c.period, 1)} ms (f = ${fmt(1000 / c.period, 2)} Hz)`).join("; "));
+    if (r.unstable.length) parts.push(r.unstable.map(c => `unstable cycle T = ${fmt(c.period, 1)} ms`).join("; "));
+    $("orbInfo").textContent = parts.length ? "Periodic orbits: " + parts.join(" · ") : "No periodic orbit found at this Iapp.";
+    drawPhase();
+  }, 90);
+}
+
+function drawPhase() {
+  const P = PP; P.xr = S.view.xr; P.yr = S.view.yr;
+  const c = P.setup(); P.axes("v (mV)", "w");
+  P.clip();
+  const I = S.I;
+  // direction field (arrow direction in screen space)
+  if (S.field) {
+    const nx = Math.max(12, Math.round((P.W - P.m.l - P.m.r) / 34)), ny = Math.max(9, Math.round((P.H - P.m.t - P.m.b) / 34));
+    c.save(); c.strokeStyle = css("--field"); c.fillStyle = css("--field"); c.lineWidth = 1; c.globalAlpha = 0.75;
+    const sx = (P.W - P.m.l - P.m.r) / (P.xr[1] - P.xr[0]), sy = (P.H - P.m.t - P.m.b) / (P.yr[1] - P.yr[0]);
+    for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
+      const X = P.m.l + (i + 0.5) * (P.W - P.m.l - P.m.r) / nx, Y = P.m.t + (j + 0.5) * (P.H - P.m.t - P.m.b) / ny;
+      const v = P.ix(X), w = P.iy(Y);
+      let dx = M.fv(v, w, I) * sx, dy = -M.fw(v, w) * sy; const L = Math.hypot(dx, dy); if (!(L > 0)) continue;
+      dx /= L; dy /= L; const len = 11;
+      const x0 = X - dx * len / 2, y0 = Y - dy * len / 2, x1 = X + dx * len / 2, y1 = Y + dy * len / 2;
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+      c.beginPath(); c.moveTo(x1, y1); c.lineTo(x1 - dx * 4 - dy * 2.5, y1 - dy * 4 + dx * 2.5); c.lineTo(x1 - dx * 4 + dy * 2.5, y1 - dy * 4 - dx * 2.5); c.closePath(); c.fill();
+    }
+    c.restore();
+  }
+  const vs = []; for (let v = P.xr[0]; v <= P.xr[1]; v += (P.xr[1] - P.xr[0]) / 900) vs.push(v);
+  const brk = ws => i => ws[i] < P.yr[0] - 2 || ws[i] > P.yr[1] + 2;
+  // nullcline family
+  const fam = S.family.split(/[,;\s]+/).map(Number).filter(x => S.family.trim() !== "" && isFinite(x));
+  c.save(); c.font = "11px " + css("--font-mono");
+  fam.forEach(Iv => {
+    const ws = vs.map(v => M.vnull(v, Iv));
+    P.path(vs, ws, { color: css("--vnull"), width: 1.2, alpha: 0.45, dash: [5, 3], breakIf: brk(ws) });
+    // label near the local max of this nullcline (or right edge)
+    let bi = -1, bw = -Infinity; for (let i = 0; i < vs.length; i++) if (ws[i] <= P.yr[1] && ws[i] > bw && vs[i] > -40) { bw = ws[i]; bi = i; }
+    if (bi >= 0) { c.fillStyle = css("--vnull"); c.globalAlpha = 0.85; c.textAlign = "center"; c.fillText("I=" + Iv, P.x(vs[bi]), Math.max(P.m.t + 10, P.y(bw) - 6)); }
+  });
+  c.restore();
+  // nullclines
+  P.path(vs, vs.map(v => M.winf(v)), { color: css("--wnull"), width: 2.2 });
+  const wsN = vs.map(v => M.vnull(v, I));
+  P.path(vs, wsN, { color: css("--vnull"), width: 2.4, breakIf: brk(wsN) });
+  // manifolds
+  if (S.man) for (const mf of cache.man) P.path(mf.tr.v, mf.tr.w, { color: css(mf.kind === "u" ? "--wu" : "--sman"), width: 1.8, dash: mf.kind === "s" ? [] : [] });
+  // orbits
+  if (S.orb && cache.orbitsI === I) for (const o of cache.orbits) P.path(o.tr.v, o.tr.w, { color: css("--orbit"), width: o.st ? 2.4 : 1.8, dash: o.st ? [] : [6, 4] });
+  // trajectories
+  cache.trajs.forEach((tr, k) => {
+    const col = TRAJ_COLORS[k % TRAJ_COLORS.length];
+    P.path(tr.v, tr.w, { color: col, width: 1.7 });
+    c.save(); c.fillStyle = col; c.beginPath(); c.arc(P.x(tr.v[0]), P.y(tr.w[0]), 3.5, 0, 7); c.fill(); c.restore();
+  });
+  // equilibria
+  for (const e of cache.eqs) {
+    const X = P.x(e.v), Y = P.y(e.w); c.save(); c.lineWidth = 2; c.strokeStyle = css("--ink"); c.fillStyle = e.stable ? css("--ink") : css("--panel");
+    if (e.type === "saddle") { c.beginPath(); c.moveTo(X, Y - 7); c.lineTo(X + 7, Y); c.lineTo(X, Y + 7); c.lineTo(X - 7, Y); c.closePath(); c.fillStyle = css("--panel"); c.fill(); c.stroke(); }
+    else { c.beginPath(); c.arc(X, Y, 5.5, 0, 7); c.fill(); c.stroke(); }
+    c.restore();
+  }
+  c.restore();
+  c.save(); c.font = "600 12px " + css("--font-mono"); c.fillStyle = css("--ink"); c.textAlign = "left"; c.fillText(`Iapp = ${fmt(I, 3)}   φ = ${S.params.phi}`, P.m.l + 8, P.m.t + 16); c.restore();
+}
+
+function drawTS() {
+  const P = TS; const T = S.T; P.xr = [0, T]; P.yr = [-80, 50];
+  const c = P.setup(); P.axes("t (ms)", "v (mV)");
+  if (S.showWt) {
+    c.save(); c.font = "11px " + css("--font-mono"); c.fillStyle = css("--muted"); c.textAlign = "left"; c.textBaseline = "middle";
+    for (const w of [0, 0.2, 0.4, 0.6]) c.fillText(w.toFixed(1), P.W - P.m.r + 6, P.y(-80 + w / 0.75 * 130));
+    c.save(); c.translate(P.W - 8, P.m.t + (P.H - P.m.t - P.m.b) / 2); c.rotate(Math.PI / 2); c.textAlign = "center"; c.font = "12px " + css("--font-body"); c.fillText("w (dashed)", 0, 0); c.restore();
+    c.restore();
+  }
+  P.clip();
+  // 0 mV threshold line
+  P.path([0, T], [0, 0], { color: css("--muted"), width: 1, dash: [2, 4], alpha: 0.8 });
+  cache.trajs.forEach((tr, k) => {
+    const col = TRAJ_COLORS[k % TRAJ_COLORS.length];
+    P.path(tr.t, tr.v, { color: col, width: 1.7 });
+    if (S.showWt) P.path(tr.t, tr.w.map(w => -80 + w / 0.75 * 130), { color: col, width: 1.3, dash: [4, 3], alpha: 0.8 });
+  });
+  c.restore();
+}
+
+function latency(tr) {
+  if (tr.v[0] >= 0) return "starts above 0 mV";
+  for (let i = 1; i < tr.v.length; i++) if (tr.v[i - 1] < 0 && tr.v[i] >= 0) {
+    const t = tr.t[i - 1] + (tr.t[i] - tr.t[i - 1]) * (-tr.v[i - 1]) / (tr.v[i] - tr.v[i - 1]);
+    return `spike latency ${fmt(t, 1)} ms`;
+  }
+  return "no spike (v stays below 0 mV)";
+}
+function spikesInfo(tr) {
+  const ts = []; for (let i = 1; i < tr.v.length; i++) if (tr.v[i - 1] < 0 && tr.v[i] >= 0) ts.push(tr.t[i]);
+  if (ts.length >= 3) { const isi = ts[ts.length - 1] - ts[ts.length - 2]; return ` · ${ts.length} spikes, last ISI ${fmt(isi, 1)} ms`; }
+  if (ts.length) return ` · ${ts.length} spike${ts.length > 1 ? "s" : ""}`;
+  return "";
+}
+function renderTrajList() {
+  $("trajList").innerHTML = cache.trajs.map((tr, k) => `<div><i class="dot" style="background:${TRAJ_COLORS[k % TRAJ_COLORS.length]}"></i><span class="num">(v₀, w₀) = (${fmt(tr.v[0], 2)}, ${fmt(tr.w[0], 4)})</span><span>${latency(tr)}${spikesInfo(tr)}</span></div>`).join("") || `<span class="hint">No trajectories. Click in the phase plane to add one.</span>`;
+}
+
+function renderEqTable() {
+  const ext = nullBranches(S.I);
+  const rows = cache.eqs.map(e => {
+    const J = M.jac(e.v, e.w);
+    const cl = e.type === "saddle" ? "x" : e.stable ? "s" : "u";
+    const lam = l => l.im ? `${fmt(l.re, 4)} ${l.im >= 0 ? "+" : "−"} ${fmt(Math.abs(l.im), 4)}i` : fmt(l.re, 4);
+    return `<tr><td><span class="pill ${cl}">${e.type}</span></td><td class="num">${fmt(e.v, 3)}</td><td class="num">${fmt(e.w, 4)}</td><td class="num">${lam(e.l1)}</td><td class="num">${lam(e.l2)}</td><td class="num">${fmt(e.tr, 4)}</td><td class="num">${fmt(e.det, 5)}</td><td class="num">${fmt(J[0], 4)}</td><td class="num">${fmt(J[3], 4)}</td><td>${branchName(e.v, ext)}</td></tr>`;
+  }).join("");
+  $("eqTable").innerHTML = `<thead><tr><th>type</th><th>v*</th><th>w*</th><th>λ₁</th><th>λ₂</th><th>tr J</th><th>det J</th><th>∂f/∂v</th><th>∂g/∂w</th><th>branch</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function renderEvents() {
+  const br = branchOnly(); const bd = bifData();
+  const list = br.events.map(e => ({ kind: e.kind === "SN" ? "LP" : "HB", I: e.I, note: e.kind === "SN" ? `fold of equilibria, v = ${fmt(e.v, 2)}` : `Hopf, v = ${fmt(e.v, 2)}, f₀ ≈ ${fmt(e.freqHz, 2)} Hz` }));
+  if (bd) for (const e of bd.cyc) list.push({ kind: e.kind === "SNP" ? "LPC" : "T→∞", I: e.I, note: e.kind === "SNP" ? "fold of limit cycles" : "cycle family ends, period diverges" });
+  list.sort((a, b) => a.I - b.I);
+  const html = list.map(e => `<div class="ev"><span class="tag">${e.kind}</span><span><span class="num">I* = ${fmt(e.I, 3)}</span><br><span class="hint">${e.note}</span></span><span class="btns"><button class="btn" data-goI="${e.I}" data-sg="-1" title="Set Iapp = I* − ε">−ε</button><button class="btn" data-goI="${e.I}" data-sg="0" title="Set Iapp = I*">I*</button><button class="btn" data-goI="${e.I}" data-sg="1" title="Set Iapp = I* + ε">+ε</button></span></div>`).join("");
+  const empty = `<span class="hint">No bifurcation points in the I<sub>app</sub> range.</span>`;
+  $("evList").innerHTML = html || empty;
+  $("evList2").innerHTML = (html || empty) + (bd ? "" : `<span class="hint">Cycle folds and homoclinic points appear once the bifurcation diagram has been computed for these parameters.</span>`);
+}
+
+function syncInputs() {
+  const [a, b] = S.params.Irange;
+  $("Irange").min = a; $("Irange").max = b; $("Irange").value = S.I; $("Inum").value = +S.I.toFixed(4);
+  $("phiNum").value = S.params.phi; $("phiRange").value = Math.min(0.6, S.params.phi);
+  for (const [k] of PKEYS) { const el = $("p_" + k); if (el && document.activeElement !== el) el.value = S.params[k]; }
+  $("customBadge").hidden = isDefault();
+  $("fileTag").textContent = isDefault() ? SETS[S.set].file : SETS[S.set].file + " (modified)";
+  document.querySelectorAll("#setSeg button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.set === S.set)));
+}
+
+function updatePhase(full = true) {
+  computeLocal(); drawPhase(); drawTS(); renderTrajList(); renderEqTable();
+  if (full) scheduleOrbits();
+}
+
+// ---------- bifurcation diagram ----------
+const BP = makePlot($("bif"), { l: 54, r: 16, t: 16, b: 40 });
+let bifComputing = false, bifTimer = null;
+const bifTab = () => S.tab === "bif" || S.tab === "freq";
+function scheduleBif(delay = 300) {
+  clearTimeout(bifTimer);
+  if (bifData()) { if (!bifComputing) $("bifProg").hidden = true; return; }
+  if (!bifTab()) return;
+  $("bifProg").hidden = false;
+  bifTimer = setTimeout(ensureBif, delay);
+}
+async function ensureBif() {
+  if (bifData() || bifComputing) return;
+  bifComputing = true; $("bifProg").hidden = false; $("bifBar").style.width = "0%";
+  const key = paramKey(S.params), p = { ...S.params }, m = makeModel(p);
+  let sw;
+  try {
+    sw = await sweep(m, p.Irange, 140, f => {
+      if (paramKey(S.params) !== key) throw new Error("stale");
+      $("bifBar").style.width = Math.round(f * 100) + "%";
+    });
+  } catch (e) { bifComputing = false; $("bifProg").hidden = true; scheduleBif(); return; }
+  const branch = eqBranch(m, p.Irange);
+  bifCache[key] = { branch, rows: sw.rows.map(r => ({ I: r.I, stable: r.stable, unstable: r.unstable })), cyc: classifyEdges(sw.edges, branch.events, sw.rows) };
+  bifComputing = false; $("bifProg").hidden = true;
+  renderEvents();
+  if (S.tab === "bif") drawBif();
+  if (S.tab === "freq") { drawFreq(); renderOnset(); }
+  if (paramKey(S.params) !== key) scheduleBif();
+}
+function drawBif() {
+  const P = BP; P.xr = S.params.Irange.slice(); const yv = S.bifY === "v";
+  P.yr = yv ? [-70, 45] : [-0.02, 0.72];
+  const c = P.setup(); P.axes("Iapp (µA/cm²)", yv ? "v (mV)" : "w");
+  P.clip();
+  const br = branchOnly();
+  // current I
+  P.path([S.I, S.I], P.yr, { color: css("--accent"), width: 1.5, dash: [3, 3], alpha: 0.8 });
+  // equilibrium branch segments by type
+  const pts = br.pts; let seg = [];
+  const flush = (type, st) => {
+    if (seg.length < 2) return;
+    const xs = seg.map(q => q.I), ys = seg.map(q => yv ? q.v : q.w);
+    if (st) P.path(xs, ys, { color: css("--ink"), width: 2.6 });
+    else if (type === "saddle") P.path(xs, ys, { color: css("--warn"), width: 1.6, dash: [6, 4] });
+    else P.path(xs, ys, { color: css("--ink"), width: 1.4, dash: [3, 4] });
+  };
+  const cls = q => q.det < 0 ? "saddle" : q.stable ? "stable" : "unstable";
+  for (let i = 0; i < pts.length; i++) {
+    if (seg.length && cls(pts[i]) !== cls(seg[seg.length - 1])) { seg.push(pts[i]); flush(cls(seg[0]), cls(seg[0]) === "stable"); seg = [pts[i]]; }
+    else seg.push(pts[i]);
+  }
+  flush(seg.length ? cls(seg[0]) : "", seg.length && cls(seg[0]) === "stable");
+  // cycles
+  const bd = bifData();
+  if (bd) {
+    for (const r of bd.rows) {
+      for (const cy of r.stable) for (const yy of (yv ? [cy.vmax, cy.vmin] : [cy.wmax, cy.wmin])) { c.fillStyle = css("--accent"); c.beginPath(); c.arc(P.x(r.I), P.y(yy), 2.4, 0, 7); c.fill(); }
+      for (const cy of r.unstable) for (const yy of (yv ? [cy.vmax, cy.vmin] : [cy.wmax, cy.wmin])) { c.strokeStyle = css("--uman"); c.lineWidth = 1.2; c.beginPath(); c.arc(P.x(r.I), P.y(yy), 2.6, 0, 7); c.stroke(); }
+    }
+  }
+  // event markers
+  c.font = "600 11px " + css("--font-mono"); c.textAlign = "center";
+  for (const e of br.events) {
+    const X = P.x(e.I), Y = P.y(yv ? e.v : e.w);
+    c.fillStyle = css("--panel"); c.strokeStyle = css("--ink"); c.lineWidth = 1.6;
+    if (e.kind === "HB") { c.beginPath(); c.rect(X - 4.5, Y - 4.5, 9, 9); c.fill(); c.stroke(); }
+    else { c.beginPath(); c.moveTo(X, Y - 6); c.lineTo(X + 6, Y + 4.5); c.lineTo(X - 6, Y + 4.5); c.closePath(); c.fill(); c.stroke(); }
+    c.fillStyle = css("--ink"); c.fillText(e.kind === "SN" ? "LP" : "HB", X, Y - 10);
+  }
+  if (bd) { let lastX = -1e9, lvl = 0; for (const e of bd.cyc.slice().sort((a, b) => a.I - b.I)) {
+    const X = P.x(e.I);
+    P.path([e.I, e.I], P.yr, { color: css("--muted"), width: 1, dash: [1, 3] });
+    lvl = (X - lastX < 34) ? lvl + 1 : 0; lastX = X;
+    c.fillStyle = css("--muted"); c.textAlign = lvl % 2 ? "left" : "right"; c.fillText(e.kind === "SNP" ? "LPC" : "T→∞", X + (lvl % 2 ? 4 : -4), P.m.t + 12 + 13 * lvl);
+  } c.textAlign = "center"; }
+  c.restore();
+  // at-I summary
+  renderAtI();
+}
+function renderAtI() {
+  const bd = bifData(); const eqs = equilibria(M, S.I);
+  let near = null; if (bd) { let best = Infinity; for (const r of bd.rows) { const d = Math.abs(r.I - S.I); if (d < best) { best = d; near = r; } } }
+  const st = eqs.filter(e => e.stable).length;
+  const sc = near ? near.stable.length : 0, uc = near ? near.unstable.length : 0;
+  $("atI").innerHTML = `<span class="num">I<sub>app</sub> = ${fmt(S.I, 3)}</span><br>${eqs.length} equilibri${eqs.length === 1 ? "um" : "a"} (${eqs.map(e => e.type).join(", ")})` + (near ? `<br>nearest computed column I = ${fmt(near.I, 2)}: ${sc} stable cycle${sc === 1 ? "" : "s"}, ${uc} unstable cycle${uc === 1 ? "" : "s"}<br><b>${st + sc}</b> attractor${st + sc === 1 ? "" : "s"} in total` : "");
+}
+
+// ---------- frequency ----------
+const FP = makePlot($("freq"), { l: 60, r: 16, t: 14, b: 40 });
+function freqSeries(bd, unstable) {
+  const pts = [];
+  for (const r of bd.rows) for (const c of (unstable ? r.unstable : r.stable)) pts.push([r.I, 1000 / c.period]);
+  pts.sort((a, b) => a[0] - b[0]); return pts;
+}
+function drawFreq() {
+  const P = FP; const k = S.unit === "hz" ? 1 : 2 * Math.PI;
+  const series = [];
+  const curDefault = isDefault();
+  for (const s of [1, 2, 3]) {
+    if (!S.ovl[s]) continue;
+    const bd = (s === S.set && !curDefault) ? bifData() : bifCache[paramKey(SETS[s])];
+    if (!bd) continue;
+    series.push({ s, bd, color: css("--set" + s), cur: s === S.set });
+  }
+  if (!curDefault && !bifData()) $("freqNote").textContent = "Current parameters differ from the .ode file; the curve for this set appears once the diagram is computed.";
+  else $("freqNote").textContent = !curDefault ? `Set ${S.set} curve uses the modified parameters.` : "";
+  let xr = [Infinity, -Infinity], ymax = 0;
+  for (const sr of series) {
+    const pts = freqSeries(sr.bd, false).concat(S.showUnstF ? freqSeries(sr.bd, true) : []);
+    for (const p of pts) { xr[0] = Math.min(xr[0], p[0]); xr[1] = Math.max(xr[1], p[0]); ymax = Math.max(ymax, p[1] * k); }
+  }
+  if (!isFinite(xr[0])) xr = [0, 300];
+  xr = [Math.floor(xr[0] / 10) * 10 - 5, Math.ceil(xr[1] / 10) * 10 + 5];
+  if (S.zoomOnset) {
+    const bd = series.find(s => s.cur)?.bd; const f = bd ? freqSeries(bd, false) : [];
+    if (f.length) { const I0 = f[0][0]; xr = [I0 - 3, I0 + 12]; ymax = Math.max(...f.filter(p => p[0] <= I0 + 12).map(p => p[1] * k)); }
+  }
+  P.xr = xr; P.yr = [0, (ymax || 1) * 1.08];
+  const c = P.setup(); P.axes("Iapp (µA/cm²)", S.unit === "hz" ? "f (Hz)" : "ω (rad/s)");
+  P.clip();
+  for (const sr of series) {
+    for (const uns of (S.showUnstF ? [true, false] : [false])) {
+      const pts = freqSeries(sr.bd, uns);
+      // split into runs separated by gaps
+      let run = [];
+      const draw = () => { if (run.length > 1) P.path(run.map(p => p[0]), run.map(p => p[1] * k), { color: sr.color, width: uns ? 1.4 : (sr.cur ? 2.6 : 1.8), dash: uns ? [2, 3] : [], alpha: sr.cur ? 1 : 0.75 }); };
+      for (let i = 0; i < pts.length; i++) {
+        if (run.length && (pts[i][0] - run[run.length - 1][0] > (sr.bd.rows.length ? 4 : 4) || Math.abs(pts[i][1] - run[run.length - 1][1]) > 6)) { draw(); run = []; }
+        run.push(pts[i]);
+      }
+      draw();
+      if (!uns) for (const p of pts) { c.fillStyle = sr.color; c.globalAlpha = sr.cur ? 1 : 0.7; c.beginPath(); c.arc(P.x(p[0]), P.y(p[1] * k), sr.cur ? 2.2 : 1.6, 0, 7); c.fill(); c.globalAlpha = 1; }
+    }
+  }
+  // labels
+  c.font = "600 12px " + css("--font-body");
+  for (const sr of series) {
+    const f = freqSeries(sr.bd, false); if (!f.length) continue;
+    const last = f.filter(p => p[0] >= P.xr[0] && p[0] <= P.xr[1]).pop(); if (!last) continue;
+    c.fillStyle = sr.color; c.textAlign = "right"; c.fillText("Set " + sr.s, Math.min(P.x(last[0]) - 4, P.W - P.m.r - 4), P.y(last[1] * k) - 8);
+  }
+  c.restore();
+}
+function renderOnset() {
+  const k = S.unit === "hz" ? 1 : 2 * Math.PI, u = S.unit === "hz" ? "Hz" : "rad/s";
+  const rows = [1, 2, 3].map(s => {
+    const bd = (s === S.set && !isDefault()) ? bifData() : bifCache[paramKey(SETS[s])];
+    if (!bd) return `<tr><td>Set ${s}</td><td colspan="3" class="hint">not computed</td></tr>`;
+    const f = freqSeries(bd, false); if (!f.length) return `<tr><td>Set ${s}</td><td colspan="3">no stable cycles</td></tr>`;
+    const [I0, f0] = f[0], fmax = Math.max(...f.map(p => p[1]));
+    return `<tr><td>Set ${s}</td><td class="num">${fmt(I0, 2)}</td><td class="num">${fmt(f0 * k, 2)}</td><td class="num">${fmt(fmax * k, 1)}</td></tr>`;
+  }).join("");
+  $("onsetTable").innerHTML = `<table><thead><tr><th></th><th>I onset</th><th>${u} onset</th><th>${u} max</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---------- events / interaction ----------
+function setI(I, opts = {}) {
+  const [a, b] = S.params.Irange;
+  S.I = Math.max(a - 50, Math.min(b + 50, +I));
+  syncInputs(); updatePhase(true);
+  if (S.tab === "bif") drawBif();
+}
+function setSet(k) {
+  S.set = k; S.params = { ...SETS[k] }; S.I = DEFAULT_I[k]; S.trajIC = DEFAULT_TRAJ[k].slice();
+  S.view = JSON.parse(JSON.stringify(VIEW0)); cache.orbitsRaw = [];
+  syncInputs(); renderEvents(); updatePhase(true); redrawTab();
+  try { localStorage.setItem("ml-set", String(k)); } catch (e) {}
+}
+function paramChanged() {
+  M = makeModel(S.params); cache.orbitsRaw = [];
+  syncInputs(); renderEvents(); updatePhase(true);
+  redrawTab();
+}
+function redrawTab() {
+  if (S.tab === "phase") { drawPhase(); drawTS(); }
+  if (S.tab === "bif") { drawBif(); scheduleBif(); }
+  if (S.tab === "freq") { drawFreq(); renderOnset(); scheduleBif(); }
+}
+function setTab(t) {
+  S.tab = t;
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  for (const p of ["phase", "bif", "freq"]) $("pane-" + p).hidden = p !== t;
+  redrawTab();
+  try { localStorage.setItem("ml-tab", t); } catch (e) {}
+}
+
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+document.querySelectorAll("#setSeg button").forEach(b => b.addEventListener("click", () => setSet(+b.dataset.set)));
+$("Irange").addEventListener("input", e => setI(+e.target.value));
+$("Inum").addEventListener("change", e => { if (e.target.value !== "") setI(+e.target.value); });
+$("epsNum").addEventListener("change", e => { S.eps = Math.abs(+e.target.value) || 0; });
+$("phiRange").addEventListener("input", e => { S.params.phi = +e.target.value; paramChanged(); });
+$("phiNum").addEventListener("change", e => { const v = +e.target.value; if (v > 0) { S.params.phi = v; paramChanged(); } });
+$("showField").addEventListener("change", e => { S.field = e.target.checked; drawPhase(); });
+$("showMan").addEventListener("change", e => { S.man = e.target.checked; updatePhase(false); });
+$("showOrb").addEventListener("change", e => { S.orb = e.target.checked; scheduleOrbits(); drawPhase(); });
+$("family").addEventListener("input", e => { S.family = e.target.value; drawPhase(); });
+$("Tnum").addEventListener("change", e => { S.T = Math.max(10, Math.min(20000, +e.target.value || 400)); updatePhase(false); });
+$("showWt").addEventListener("change", e => { S.showWt = e.target.checked; drawTS(); });
+$("clearTraj").addEventListener("click", () => { S.trajIC = []; updatePhase(false); });
+$("resetView").addEventListener("click", () => { S.view = JSON.parse(JSON.stringify(VIEW0)); updatePhase(false); });
+function onEvClick(e) {
+  const b = e.target.closest("[data-goI]"); if (!b) return;
+  const I = +b.dataset.goi, sg = +b.dataset.sg; setI(I + sg * S.eps); setTab("phase");
+}
+$("evList").addEventListener("click", onEvClick); $("evList2").addEventListener("click", onEvClick);
+document.querySelectorAll("#bifYSeg button").forEach(b => b.addEventListener("click", () => { S.bifY = b.dataset.y; document.querySelectorAll("#bifYSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); drawBif(); }));
+document.querySelectorAll("#unitSeg button").forEach(b => b.addEventListener("click", () => { S.unit = b.dataset.u; document.querySelectorAll("#unitSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); drawFreq(); renderOnset(); }));
+document.querySelectorAll(".ovl").forEach(b => b.addEventListener("change", () => { S.ovl[b.dataset.s] = b.checked; drawFreq(); }));
+$("showUnstF").addEventListener("change", e => { S.showUnstF = e.target.checked; drawFreq(); });
+$("zoomOnset").addEventListener("change", e => { S.zoomOnset = e.target.checked; drawFreq(); });
+
+// parameter inputs
+$("pgrid").innerHTML = PKEYS.map(([k, lbl]) => `<label for="p_${k}">${lbl}<input type="number" id="p_${k}" step="any"></label>`).join("");
+for (const [k] of PKEYS) $("p_" + k).addEventListener("change", e => { const v = +e.target.value; if (isFinite(v) && e.target.value !== "") { S.params[k] = v; paramChanged(); } });
+$("resetParams").addEventListener("click", () => { const I = S.I; S.params = { ...SETS[S.set] }; S.I = I; paramChanged(); });
+
+// phase canvas: click = trajectory, drag = pan, wheel = zoom
+(function () {
+  const cv = $("phase"); let down = null;
+  const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.addEventListener("pointerdown", e => { const [x, y] = pos(e); down = { x, y, view: JSON.parse(JSON.stringify(S.view)), moved: false, touch: e.pointerType === "touch" }; if (!down.touch) cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener("pointermove", e => {
+    const [x, y] = pos(e);
+    if (PP.inside(x, y)) $("phaseRead").textContent = `v = ${fmt(PP.ix(x), 2)}  w = ${fmt(PP.iy(y), 4)}`;
+    if (!down || down.touch) return;
+    if (Math.hypot(x - down.x, y - down.y) > 4) down.moved = true;
+    if (down.moved) {
+      const dxv = (x - down.x) / (PP.W - PP.m.l - PP.m.r) * (down.view.xr[1] - down.view.xr[0]);
+      const dyw = (y - down.y) / (PP.H - PP.m.t - PP.m.b) * (down.view.yr[1] - down.view.yr[0]);
+      S.view.xr = [down.view.xr[0] - dxv, down.view.xr[1] - dxv]; S.view.yr = [down.view.yr[0] + dyw, down.view.yr[1] + dyw];
+      drawPhase();
+    }
+  });
+  cv.addEventListener("pointerup", e => {
+    if (!down) return; const [x, y] = pos(e);
+    if (down.moved) { updatePhase(false); }
+    else if (PP.inside(x, y)) {
+      S.trajIC.push([PP.ix(x), PP.iy(y)]); if (S.trajIC.length > 6) S.trajIC.shift();
+      updatePhase(false);
+    }
+    down = null;
+  });
+  cv.addEventListener("pointerleave", () => { $("phaseRead").textContent = ""; });
+  cv.addEventListener("wheel", e => {
+    const [x, y] = pos(e); if (!PP.inside(x, y)) return; e.preventDefault();
+    const f = e.deltaY > 0 ? 1.15 : 1 / 1.15, v = PP.ix(x), w = PP.iy(y);
+    S.view.xr = [v + (S.view.xr[0] - v) * f, v + (S.view.xr[1] - v) * f];
+    S.view.yr = [w + (S.view.yr[0] - w) * f, w + (S.view.yr[1] - w) * f];
+    clearTimeout(cv._t); drawPhase(); cv._t = setTimeout(() => updatePhase(false), 150);
+  }, { passive: false });
+})();
+// bif canvas: click sets I
+(function () {
+  const cv = $("bif");
+  const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.addEventListener("pointermove", e => { const [x, y] = pos(e); $("bifRead").textContent = BP.inside(x, y) ? `I = ${fmt(BP.ix(x), 2)}  ${S.bifY} = ${fmt(BP.iy(y), S.bifY === "v" ? 1 : 3)}` : ""; });
+  cv.addEventListener("pointerleave", () => { $("bifRead").textContent = ""; });
+  cv.addEventListener("click", e => { const [x, y] = pos(e); if (BP.inside(x, y)) { setI(+BP.ix(x).toFixed(2)); drawBif(); } });
+  const fv = $("freq");
+  fv.addEventListener("pointermove", e => { const r = fv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; $("freqRead").textContent = FP.inside(x, y) ? `I = ${fmt(FP.ix(x), 2)}  ${S.unit === "hz" ? "f" : "ω"} = ${fmt(FP.iy(y), 2)}` : ""; });
+  fv.addEventListener("pointerleave", () => { $("freqRead").textContent = ""; });
+})();
+
+// theme + resize redraws
+new ResizeObserver(() => redrawTab()).observe(document.querySelector(".wrap"));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawTab);
+new MutationObserver(redrawTab).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawTab);
+
+// boot
+let startSet = 1, startTab = "phase";
+try { startSet = +(localStorage.getItem("ml-set") || 1) || 1; startTab = localStorage.getItem("ml-tab") || "phase"; } catch (e) {}
+const h = (location.hash || "").slice(1); if (["phase", "bif", "freq"].includes(h)) startTab = h;
+if (!["phase", "bif", "freq"].includes(startTab)) startTab = "phase";
+setSet([1, 2, 3].includes(startSet) ? startSet : 1);
+setTab(startTab);
+})();
+
+</script>
+
+</body></html>
